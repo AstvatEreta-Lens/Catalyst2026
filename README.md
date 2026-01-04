@@ -1,6 +1,8 @@
 
 # Project Structure Folder
 Ini struktur projectnya, Kita pakai MVVM. Secara umum strukturnya bisa berubah setiap ada pertambahan fitur, jadi disesuaikan aja sama penempatannya. 
+
+```
 Talangin
 ├── App
 │   ├── TalanginApp.swift        # Entry point aplikasi (App lifecycle)
@@ -61,6 +63,5 @@ Talangin
 │
 ├── Info.plist                   # App configuration & capabilities
 └── Talangin.xcodeproj           # Xcode project file
-
-
+```
 Kalau ada pertanyaan tanya aja di grup.
