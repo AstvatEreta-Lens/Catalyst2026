@@ -77,6 +77,17 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
+            .alert(
+                "Log Out",
+                isPresented: $showLogoutConfirm
+            ) {
+                Button("Log Out", role: .destructive) {
+                    authState.logout()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to log out?")
+            }
         }
         .onAppear {
             viewModel.injectContext(modelContext)

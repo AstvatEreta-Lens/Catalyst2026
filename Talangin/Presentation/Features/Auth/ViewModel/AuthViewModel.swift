@@ -13,6 +13,7 @@ final class AuthViewModel: NSObject, ObservableObject {
 
     // MARK: - Dependencies
     private var userRepository: UserRepositoryProtocol?
+    @Published var isAuthenticated: Bool = false
 
     // MARK: - UI State
     @Published var isLoading: Bool = false
@@ -32,6 +33,14 @@ final class AuthViewModel: NSObject, ObservableObject {
         // TODO: implement later
         print("Login with email:", email)
     }
+    
+    func logout() {
+    
+            KeychainService.delete(for: "appleUserID")
+
+
+            isAuthenticated = false
+        }
 
     // MARK: - Apple Sign In
     func configureAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
