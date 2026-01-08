@@ -10,9 +10,16 @@ import SwiftData
 
 @main
 struct TalanginApp: App {
+    @StateObject private var authState = AppAuthState()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AuthGateView()
+                .environmentObject(authState)
         }
+        .modelContainer(for: [
+                    UserEntity.self,
+                    PaymentMethodEntity.self
+                ])
     }
 }

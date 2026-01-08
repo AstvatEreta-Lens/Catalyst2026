@@ -1,0 +1,41 @@
+//
+//  PaymentMethodEntity.swift
+//  Talangin
+//
+//  Created by Ahmad Al Wabil on 07/01/26.
+//
+
+
+import SwiftData
+import Foundation
+
+@Model
+final class PaymentMethodEntity {
+
+    // MARK: - Identity
+    @Attribute(.unique)
+    var id: UUID
+
+    // MARK: - Data
+    var providerName: String
+    var destination: String
+
+    // MARK: - Relationship
+    @Relationship(inverse: \UserEntity.paymentMethods)
+    var user: UserEntity?
+
+    // MARK: - Metadata
+    var createdAt: Date
+
+    init(
+        providerName: String,
+        destination: String,
+        user: UserEntity
+    ) {
+        self.id = UUID()
+        self.providerName = providerName
+        self.destination = destination
+        self.user = user
+        self.createdAt = .now
+    }
+}
