@@ -40,6 +40,12 @@ struct MainTabView: View {
     }
 }
 
-#Preview {
+#Preview("English") {
     MainTabView()
+        .environment(\.locale, .init(identifier: "en"))
+}
+
+#Preview("Indonesia") {
+    MainTabView()
+        .environment(\.locale, .init(identifier: "id"))
 }
