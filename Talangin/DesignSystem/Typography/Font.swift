@@ -1,32 +1,49 @@
 //
-//  Untitled.swift
+//  Font.swift
 //  Talangin
 //
-//  Created by Ahmad Al Wabil on 04/01/26.
+//  Created by Rifqi on 14/01/26.
 //
-
-// Font apa aja yang dipakai dan ukuran standar yang digunakan
-
 
 import SwiftUI
 
-enum FontTokens {
+/// Extension ini membuat pemanggilan font menjadi semantik dan konsisten.
+/// Usage: Text("Judul").font(.appTitle)
+extension Font {
 
-    // Font Family
-    static let regular = "Inter-Regular"
-    static let medium  = "Inter-Medium"
-    static let semiBold = "Inter-SemiBold"
-    static let bold    = "Inter-Bold"
+    // MARK: - Heading
+    
+    /// Gunakan untuk Judul Halaman Utama (Size: 28, Bold)
+    static var appTitle: Font {
+        .system(size: FontTokens.xxl, weight: FontTokens.bold, design: .default)
+    }
+    
+    /// Gunakan untuk Sub-judul atau Section Header (Size: 22, SemiBold)
+    static var appSubtitle: Font {
+        .system(size: FontTokens.xl, weight: FontTokens.semiBold, design: .default)
+    }
 
-    // Font Sizes
-    static let xs: CGFloat = 12
-    static let sm: CGFloat = 14
-    static let md: CGFloat = 16
-    static let lg: CGFloat = 18
-    static let xl: CGFloat = 22
-    static let xxl: CGFloat = 28
+    // MARK: - Body
     
-    // bisa disesuaikan dengan design system dari figma
+    /// Gunakan untuk teks paragraf standar (Size: 16, Regular)
+    static var appBody: Font {
+        .system(size: FontTokens.md, weight: FontTokens.regular, design: .default)
+    }
     
+    /// Gunakan untuk teks paragraf yang butuh penekanan (Size: 16, Medium)
+    static var appBodyMedium: Font {
+        .system(size: FontTokens.md, weight: FontTokens.medium, design: .default)
+    }
+
+    // MARK: - Caption & Footnote
     
+    /// Gunakan untuk label form atau keterangan tambahan (Size: 14, Regular)
+    static var appCaption: Font {
+        .system(size: FontTokens.sm, weight: FontTokens.regular, design: .default)
+    }
+    
+    /// Gunakan untuk teks timestamp atau legal disclaimer (Size: 12, Regular)
+    static var appFootnote: Font {
+        .system(size: FontTokens.xs, weight: FontTokens.regular, design: .default)
+    }
 }
