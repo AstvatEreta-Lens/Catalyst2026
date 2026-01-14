@@ -18,8 +18,11 @@ struct HomeView: View {
                 Text("Home Screen")
                     .font(.largeTitle.bold())
                 
-                Text("Welcome to Talangin!")
+                Text("WELCOME TO TALANGIN!")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
+                
+               
             }
             .navigationTitle("Home")
         }
