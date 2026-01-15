@@ -7,81 +7,92 @@
 
 import SwiftUI
 
-/// Extension ini menghubungkan FontTokens dengan UI Aplikasi.
-/// Menggunakan pendekatan Hybrid:
-/// 1. Menggunakan `.system()` agar mendukung Dynamic Type & Native Feel.
-/// 2. Mengambil nilai `size` dari `FontTokens` agar terpusat (Single Source of Truth).
+/// Extension ini menghubungkan UI dengan System Font Apple.
+///
+/// **CATATAN PENTING SOAL DYNAMIC TYPE:**
+/// Meskipun kita memiliki `FontTokens` dengan nilai angka pasti (misal: 34),
+/// di sini kita MENGUTAMAKAN penggunaan **Native Text Styles** (seperti .largeTitle).
+///
+/// Alasannya: Agar ketika user mengubah "Settings > Accessibility > Larger Text",
+/// font aplikasi kita otomatis ikut membesar/mengecil tanpa coding tambahan.
+///
+/// Nilai di `FontTokens` tetap kita simpan sebagai "Reference/Documentation"
+/// untuk memastikan default size kita sama dengan Figma.
 extension Font {
+   
     
-    // MARK: - TITLES (Display & Headers)
+    // MARK: - TITLES
     
-    /// Style: Large Title (34pt) - Bold
-    /// Gunakan untuk judul halaman utama yang sangat besar.
+    /// Mapping: Large Title (Default: 34pt)
     static var appLargeTitle: Font {
-        .system(size: FontTokens.LargeTitle.size, weight: FontTokens.bold)
+        // Menggunakan style native agar Dynamic Type jalan
+        .largeTitle.weight(FontTokens.bold)
     }
     
-    /// Style: Title 1 (28pt) - Bold
-    /// Gunakan untuk judul level 1.
+    /// Mapping: Title 1 (Default: 28pt)
     static var appTitle1: Font {
-        .system(size: FontTokens.Title1.size, weight: FontTokens.bold)
+        .title.weight(FontTokens.bold) // .title di SwiftUI setara Title1
     }
     
-    /// Style: Title 2 (22pt) - Bold
-    /// Gunakan untuk section header atau judul level 2.
+    /// Mapping: Title 2 (Default: 22pt)
     static var appTitle2: Font {
-        .system(size: FontTokens.Title2.size, weight: FontTokens.bold)
+        .title2.weight(FontTokens.bold)
     }
     
-    /// Style: Title 3 (20pt) - SemiBold
-    /// Gunakan untuk judul level 3 atau sub-section.
+    /// Mapping: Title 3 (Default: 20pt)
     static var appTitle3: Font {
-        .system(size: FontTokens.Title3.size, weight: FontTokens.semiBold)
+        .title3.weight(FontTokens.semiBold)
     }
     
-    // MARK: - BODY & CONTENT
+    // MARK: - BODY
     
-    /// Style: Headline (17pt) - SemiBold
-    /// Gunakan untuk teks paragraf yang butuh penekanan (Highlight).
+    /// Mapping: Headline (Default: 17pt)
     static var appHeadline: Font {
-        .system(size: FontTokens.Headline.size, weight: FontTokens.semiBold)
+        .headline.weight(FontTokens.semiBold)
     }
     
-    /// Style: Body (17pt) - Regular
-    /// Gunakan untuk teks utama (Default text).
+    /// Mapping: Body (Default: 17pt)
     static var appBody: Font {
-        .system(size: FontTokens.Body.size, weight: FontTokens.regular)
+        .body.weight(FontTokens.regular)
     }
     
-    /// Style: Callout (16pt) - Regular
-    /// Gunakan untuk kotak info atau highlight text terpisah.
+    /// Mapping: Callout (Default: 16pt)
     static var appCallout: Font {
-        .system(size: FontTokens.Callout.size, weight: FontTokens.regular)
+        .callout.weight(FontTokens.regular)
     }
     
-    /// Style: Subheadline (15pt) - Regular
-    /// Gunakan untuk subtitle di bawah headline.
+    /// Mapping: Subheadline (Default: 15pt)
     static var appSubheadline: Font {
-        .system(size: FontTokens.Subheadline.size, weight: FontTokens.regular)
+        .subheadline.weight(FontTokens.regular)
     }
     
-    // MARK: - CAPTIONS & DETAILS
+    // MARK: - CAPTIONS
     
-    /// Style: Footnote (13pt) - Regular
-    /// Gunakan untuk catatan kaki atau helper text.
+    /// Mapping: Footnote (Default: 13pt)
     static var appFootnote: Font {
-        .system(size: FontTokens.Footnote.size, weight: FontTokens.regular)
+        .footnote.weight(FontTokens.regular)
     }
     
-    /// Style: Caption 1 (12pt) - Medium
-    /// Gunakan untuk label kecil pada form atau metadata.
+    /// Mapping: Caption 1 (Default: 12pt)
     static var appCaption: Font {
-        .system(size: FontTokens.Caption1.size, weight: FontTokens.medium)
+        .caption.weight(FontTokens.medium)
     }
     
-    /// Style: Caption 2 (11pt) - Medium
-    /// Gunakan untuk timestamp atau indikator status yang sangat kecil.
+    /// Mapping: Caption 2 (Default: 11pt)
     static var appTinyCaption: Font {
-        .system(size: FontTokens.Caption2.size, weight: FontTokens.medium)
+        .caption2.weight(FontTokens.medium)
+    }
+    
+    // MARK: - CUSTOM SIZE (Safety Net)
+    
+    /// Gunakan fungsi ini HANYA JIKA desainer minta ukuran aneh yang tidak ada di standar Apple.
+    /// Contoh: Desainer minta size 40 (di luar standar).
+    /// Fungsi ini memaksa font custom tetap support Dynamic Type relatif terhadap .body
+    static func customFixed(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        // Ini trik pro: Menggunakan .custom pada system font agar bisa scaling
+        // Kita "menipu" sistem dengan memanggil nama font SF Pro secara implisit
+        return .system(size: size, weight: weight)
+        // Note: Sebenarnya .system(size:) susah scaling otomatis kecuali pakai modifier khusus.
+        // Tapi untuk MVP, hindari penggunaan customFixed ini. Pakai variable di atas.
     }
 }

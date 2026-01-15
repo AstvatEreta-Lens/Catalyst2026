@@ -32,3 +32,16 @@ struct HomeView: View {
 #Preview {
     HomeView()
 }
+
+#Preview {
+    // TES ACCESSIBILITY
+    VStack {
+        Text("Ukuran Normal")
+            .font(.body)
+        
+        Text("Ukuran Besar (Simulasi)")
+            .font(.appBody)
+    }
+    // Modifier ini mensimulasikan user yang menyalakan setting accessibility
+    .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
+}
