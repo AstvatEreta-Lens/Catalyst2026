@@ -78,14 +78,38 @@ enum FontTokens {
 
 
 // MARK: CATATAN PENGEMBANGAN (DEV NOTE)
-/// Struct di bawah ini menyertakan properti `lineHeight` sesuai spesifikasi Figma.
-/// Saat ini, implementasi UI utama di `AppFont` hanya menggunakan `size` karena SwiftUI
-/// sudah menangani line spacing secara native (Dynamic Type) dengan sangat baik.
-///
-/// **Cara Implementasi Custom Line Height (Jika Diperlukan):**
-/// Jika Desainer membutuhkan jarak antar baris yang presisi (Pixel Perfect), gunakan modifier `.lineSpacing()`:
-/// ```swift
-/// Text("Contoh")
-///     .font(.appBody)
-///     .lineSpacing(FontTokens.Body.lineHeight - FontTokens.Body.size)
-/// ```
+
+/*
+ JIKA INGIN MENNGUBAH FONT MENJADI CUSTOM
+
+ enum FontTokens {
+    // TAMBAHAN BARU: Definisikan nama font family
+    // Pastikan file font (.ttf) sudah masuk ke project Info.plist
+    
+    static let familyName = "Poppins"
+     
+    // ... (sisa struct size/lineHeight tidak perlu diubah, biarkan sama)
+    
+    struct Body {
+         static let size: CGFloat = 17
+         static let lineHeight: CGFloat = 22
+     }
+ }
+ 
+ // JIKA INGIN MENGUBAH LINEHEIGHT LEBIH SPESIFIK SESUAI FIGMA.
+ // Saat ini, implementasi UI utama di `AppFont` hanya menggunakan `size` karena SwiftUI
+ // sudah menangani line spacing secara native (Dynamic Type) dengan sangat baik.
+
+ // **Cara Implementasi Custom Line Height (Jika Diperlukan):**
+ // Jika Desainer membutuhkan jarak antar baris yang presisi (Pixel Perfect), gunakan modifier `.lineSpacing()`:
+
+ /// ```swift
+ /// Text("Contoh")
+ ///     .font(.appBody)
+ ///     .lineSpacing(FontTokens.Body.lineHeight - FontTokens.Body.size)
+ /// ```
+
+ 
+ 
+ 
+ */

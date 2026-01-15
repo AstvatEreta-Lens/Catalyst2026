@@ -30,69 +30,84 @@ extension Font {
     }
     
     /// Mapping: Title 1 (Default: 28pt)
-    static var appTitle1: Font {
+    static var Title1: Font {
         .title.weight(FontTokens.bold) // .title di SwiftUI setara Title1
     }
     
     /// Mapping: Title 2 (Default: 22pt)
-    static var appTitle2: Font {
+    static var Title2: Font {
         .title2.weight(FontTokens.bold)
     }
     
     /// Mapping: Title 3 (Default: 20pt)
-    static var appTitle3: Font {
+    static var Title3: Font {
         .title3.weight(FontTokens.semiBold)
     }
     
     // MARK: - BODY
     
     /// Mapping: Headline (Default: 17pt)
-    static var appHeadline: Font {
+    static var Headline: Font {
         .headline.weight(FontTokens.semiBold)
     }
     
     /// Mapping: Body (Default: 17pt)
-    static var appBody: Font {
+    static var Body: Font {
         .body.weight(FontTokens.regular)
     }
     
     /// Mapping: Callout (Default: 16pt)
-    static var appCallout: Font {
+    static var Callout: Font {
         .callout.weight(FontTokens.regular)
     }
     
     /// Mapping: Subheadline (Default: 15pt)
-    static var appSubheadline: Font {
+    static var Subheadline: Font {
         .subheadline.weight(FontTokens.regular)
     }
     
     // MARK: - CAPTIONS
     
     /// Mapping: Footnote (Default: 13pt)
-    static var appFootnote: Font {
+    static var Footnote: Font {
         .footnote.weight(FontTokens.regular)
     }
     
     /// Mapping: Caption 1 (Default: 12pt)
-    static var appCaption: Font {
+    static var Caption: Font {
         .caption.weight(FontTokens.medium)
     }
     
     /// Mapping: Caption 2 (Default: 11pt)
-    static var appTinyCaption: Font {
+    static var Caption2: Font {
         .caption2.weight(FontTokens.medium)
     }
     
-    // MARK: - CUSTOM SIZE (Safety Net)
     
-    /// Gunakan fungsi ini HANYA JIKA desainer minta ukuran aneh yang tidak ada di standar Apple.
-    /// Contoh: Desainer minta size 40 (di luar standar).
-    /// Fungsi ini memaksa font custom tetap support Dynamic Type relatif terhadap .body
-    static func customFixed(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        // Ini trik pro: Menggunakan .custom pada system font agar bisa scaling
-        // Kita "menipu" sistem dengan memanggil nama font SF Pro secara implisit
-        return .system(size: size, weight: weight)
-        // Note: Sebenarnya .system(size:) susah scaling otomatis kecuali pakai modifier khusus.
-        // Tapi untuk MVP, hindari penggunaan customFixed ini. Pakai variable di atas.
-    }
+    /*
+     MARK: - FUTURE REFERENCE: CUSTOM FONT IMPLEMENTATION
+     Gunakan pattern di bawah ini jika nanti Desainer ingin mengganti SF Pro
+     dengan Custom Font (misal: Poppins/Inter) agar Dynamic Type tetap jalan.
+     
+     SEBELUMNYA:
+     
+     static var appBody: Font {
+         .body.weight(FontTokens.regular)
+     }
+     
+     DIUBAH JADI:
+     
+     static var appBody: Font {
+         // Param 'relativeTo' adalah kunci agar font custom tetap bisa membesar otomatis!
+         // Pastikan 'FontTokens.familyName' sudah didefinisikan di Font.swift
+         return .custom(FontTokens.familyName, size: FontTokens.Body.size, relativeTo: .body)
+     }
+
+     static var appTitle1: Font {
+         // Mapping ke relativeTo .title (agar scaling-nya setara Title 1)
+         return .custom(FontTokens.familyName, size: FontTokens.Title1.size, relativeTo: .title)
+     }
+     
+    */
+    
 }

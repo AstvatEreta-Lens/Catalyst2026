@@ -28,12 +28,12 @@ struct HomeView: View {
             
             
             VStack {
-                        // Panggil dari enum L10n yang kita buat
+                        // Panggil dari enum L10n yang dibuat
                         Text(L10n.Common.welcome)
-                            .font(.appTitle) // Pakai font yang sudah kita buat sebelumnya
+                            .font(.Title1)
                         
                         Text(L10n.Common.save)
-                            .font(.appBody)
+                            .font(.Body)
                     }
                     .padding()
         }
@@ -45,13 +45,13 @@ struct HomeView: View {
 }
 
 #Preview {
-    // TES ACCESSIBILITY
+    // TES ACCESSIBILITY: SAMA AJA, bedanya adalah dengan penggunaan FontTokens, nantinya kita kalau mau di custom, jadinya lebih mudah
     VStack {
         Text("Ukuran Normal")
             .font(.body)
         
         Text("Ukuran Besar (Simulasi)")
-            .font(.appBody)
+            .font(.Body)
     }
     // Modifier ini mensimulasikan user yang menyalakan setting accessibility
     .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
