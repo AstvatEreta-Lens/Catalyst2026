@@ -18,8 +18,11 @@ struct HomeView: View {
                 Text("Home Screen")
                     .font(.largeTitle.bold())
                 
-                Text("Welcome to Talangin!")
+                Text("WELCOME TO TALANGIN!")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
+                
+               
             }
             .navigationTitle("Home")
         }
@@ -28,4 +31,17 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
+}
+
+#Preview {
+    // TES ACCESSIBILITY
+    VStack {
+        Text("Ukuran Normal")
+            .font(.body)
+        
+        Text("Ukuran Besar (Simulasi)")
+            .font(.appBody)
+    }
+    // Modifier ini mensimulasikan user yang menyalakan setting accessibility
+    .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
 }
