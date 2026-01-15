@@ -25,6 +25,17 @@ struct HomeView: View {
                
             }
             .navigationTitle("Home")
+            
+            
+            VStack {
+                        // Panggil dari enum L10n yang kita buat
+                        Text(L10n.Common.welcome)
+                            .font(.appTitle) // Pakai font yang sudah kita buat sebelumnya
+                        
+                        Text(L10n.Common.save)
+                            .font(.appBody)
+                    }
+                    .padding()
         }
     }
 }
