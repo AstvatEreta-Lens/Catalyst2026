@@ -19,6 +19,8 @@ final class PaymentMethodEntity {
     // MARK: - Data
     var providerName: String
     var destination: String
+    var holderName: String
+    var isDefault: Bool
 
     // MARK: - Relationship
     @Relationship(inverse: \UserEntity.paymentMethods)
@@ -30,11 +32,15 @@ final class PaymentMethodEntity {
     init(
         providerName: String,
         destination: String,
+        holderName: String = "",
+        isDefault: Bool = false,
         user: UserEntity
     ) {
         self.id = UUID()
         self.providerName = providerName
         self.destination = destination
+        self.holderName = holderName
+        self.isDefault = isDefault
         self.user = user
         self.createdAt = .now
     }

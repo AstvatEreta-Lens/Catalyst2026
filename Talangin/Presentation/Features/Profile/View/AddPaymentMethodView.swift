@@ -1,23 +1,29 @@
 //
-//  EditPaymentMethodView.swift
+//  AddPaymentMethodView.swift
 //  Talangin
 //
-//  Created by Ahmad Al Wabil on 07/01/26.
+//  Created by Rifqi Rahman on 18/01/26.
 //
-//  Form view for editing a payment method with input fields and default toggle.
-//  Updated: Changed title to "Edit Payment Account" and added logic to unset other defaults.
+//  Form view for adding a new payment method with input fields and default toggle.
 //
 
 import SwiftUI
 import SwiftData
 
-struct EditPaymentMethodView: View {
-    @Bindable var method: PaymentMethodEntity
+struct AddPaymentMethodView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
+    // MARK: - Form State
+    @State private var providerName: String = ""
+    @State private var destination: String = ""
+    @State private var holderName: String = ""
+    @State private var isDefault: Bool = false
     @State private var showSaveError = false
     @State private var saveErrorMessage: String?
+    
+    // User to associate with the payment method
+    let user: UserEntity
 
     var body: some View {
         NavigationStack {
@@ -26,7 +32,7 @@ struct EditPaymentMethodView: View {
                     // MARK: - Form Fields
                     VStack(spacing: 0) {
                         // Bank/Wallet Name
-                        TextField("Bank or Wallet Name", text: $method.providerName)
+                        TextField("Bank or Wallet Name", text: $providerName)
                             .font(.Body)
                             .padding(.horizontal, AppSpacing.lg)
                             .padding(.vertical, AppSpacing.md)
@@ -36,7 +42,7 @@ struct EditPaymentMethodView: View {
                             .padding(.leading, AppSpacing.lg)
 
                         // Number
-                        TextField("Account Number", text: $method.destination)
+                        TextField("Account Number", text: $destination)
                             .font(.Body)
                             .keyboardType(.numberPad)
                             .padding(.horizontal, AppSpacing.lg)
@@ -47,14 +53,11 @@ struct EditPaymentMethodView: View {
                             .padding(.leading, AppSpacing.lg)
 
                         // Holder Name
-                        TextField("Holder Name", text: Binding(
-                            get: { method.holderName },
-                            set: { method.holderName = $0 }
-                        ))
-                        .font(.Body)
-                        .padding(.horizontal, AppSpacing.lg)
-                        .padding(.vertical, AppSpacing.md)
-                        .background(Color(.systemBackground))
+                        TextField("Holder Name", text: $holderName)
+                            .font(.Body)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.md)
+                            .background(Color(.systemBackground))
                     }
                     .background(Color(.systemBackground))
                     .padding(.top, AppSpacing.md)
@@ -65,19 +68,8 @@ struct EditPaymentMethodView: View {
                             .font(.Body)
                             .foregroundColor(.primary)
                         Spacer()
-                        Toggle("", isOn: Binding(
-                            get: { method.isDefault },
-                            set: { newValue in
-                                method.isDefault = newValue
-                                // If setting as default, unset other defaults
-                                if newValue, let user = method.user {
-                                    for otherMethod in user.paymentMethods where otherMethod.id != method.id {
-                                        otherMethod.isDefault = false
-                                    }
-                                }
-                            }
-                        ))
-                        .tint(AppColors.toggleTint)
+                        Toggle("", isOn: $isDefault)
+                            .tint(AppColors.toggleTint)
                     }
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.vertical, AppSpacing.md)
@@ -86,7 +78,7 @@ struct EditPaymentMethodView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Edit Payment Account")
+            .navigationTitle("Add Payment Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -100,7 +92,7 @@ struct EditPaymentMethodView: View {
                         save()
                     }
                     .fontWeight(.semibold)
-                    .disabled(method.providerName.isEmpty || method.destination.isEmpty)
+                    .disabled(providerName.isEmpty || destination.isEmpty)
                 }
             }
             .alert("Error", isPresented: $showSaveError) {
@@ -113,14 +105,25 @@ struct EditPaymentMethodView: View {
 
     // MARK: - Actions
     private func save() {
-        do {
-            // Ensure only one default exists
-            if method.isDefault, let user = method.user {
-                for otherMethod in user.paymentMethods where otherMethod.id != method.id {
-                    otherMethod.isDefault = false
-                }
+        // If setting as default, unset other defaults first
+        if isDefault {
+            for method in user.paymentMethods {
+                method.isDefault = false
             }
-            
+        }
+        
+        // Create new payment method
+        let newMethod = PaymentMethodEntity(
+            providerName: providerName,
+            destination: destination,
+            holderName: holderName,
+            isDefault: isDefault,
+            user: user
+        )
+        
+        modelContext.insert(newMethod)
+        
+        do {
             try modelContext.save()
             dismiss()
         } catch {
@@ -141,21 +144,11 @@ struct EditPaymentMethodView: View {
             )
 
             let mockUser = UserEntity(appleUserId: "preview")
-            let mockMethod = PaymentMethodEntity(
-                providerName: "BCA",
-                destination: "120-12038-19333",
-                holderName: "Rifqi Smith",
-                isDefault: true,
-                user: mockUser
-            )
-
-            // Insert into context on the main actor
             let context = container.mainContext
             context.insert(mockUser)
-            context.insert(mockMethod)
 
             return AnyView(
-                EditPaymentMethodView(method: mockMethod)
+                AddPaymentMethodView(user: mockUser)
                     .modelContainer(container)
             )
         } catch {

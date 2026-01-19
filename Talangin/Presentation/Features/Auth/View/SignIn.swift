@@ -147,3 +147,8 @@ private extension SignInView {
         .padding(.bottom, AppSpacing.md)
     }
 }
+
+#Preview {
+    SignInView()
+        .environmentObject(AppAuthState())
+}
