@@ -34,3 +34,11 @@ struct EditPhoneView: View {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        EditPhoneView(phoneNumber: "+6281234567890") { phone in
+            print("Phone saved: \(phone ?? "nil")")
+        }
+    }
+}

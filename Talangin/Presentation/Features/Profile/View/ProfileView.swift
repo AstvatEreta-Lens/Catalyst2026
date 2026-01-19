@@ -4,6 +4,9 @@
 //
 //  Created by Ahmad Al Wabil on 06/01/26.
 //
+//  Profile screen view with modular components for header, premium banner, and menu sections.
+//  Updated: Added edit profile sheet and paywall integration.
+//
 
 import SwiftUI
 import SwiftData
@@ -15,68 +18,53 @@ struct ProfileView: View {
 
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showLogoutConfirm = false
+    @State private var showPaywall = false
+    @State private var showEditProfile = false
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Profile Header
-                Section {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MARK: - Profile Header
                     ProfileHeaderView(
-                        imageData: viewModel.profilePhotoData,
-                        onEditPhoto: viewModel.updatePhoto
+                        profilePhotoData: viewModel.profilePhotoData,
+                        fullName: viewModel.fullName,
+                        email: viewModel.email,
+                        accountBadge: viewModel.isPremium ? "Premium" : "Free Account",
+                        onEditTapped: {
+                            showEditProfile = true
+                        },
+                        onPhotoChanged: { data in
+                            viewModel.updatePhoto(data)
+                        }
                     )
-                }
 
-                Section("Account") {
-                    LabeledContent("User ID", value: viewModel.userId)
-                    LabeledContent("Full Name", value: viewModel.fullName)
-                    LabeledContent("Email", value: viewModel.email)
-                }
-
-                Section("Contact") {
-                    NavigationLink {
-                        EditPhoneView(
-                            phoneNumber: viewModel.phoneNumber,
-                            onSave: viewModel.updatePhone
-                        )
-                    } label: {
-                        LabeledContent(
-                            "Phone Number",
-                            value: viewModel.phoneNumber ?? "Not set"
-                        )
-                    }
-                }
-
-                Section("Payment Methods") {
-                    NavigationLink {
-                        PaymentMethodListView(
-                            methods: viewModel.paymentMethods
-                        )
-                    } label: {
-                        Text("Manage Payment Methods")
-                    }
-                }
-
-                Section {
-                    LabeledContent(
-                        "Joined",
-                        value: viewModel.createdAtFormatted
-                    )
-                }
-
-                Section {
-                    Button(role: .destructive) {
-                        showLogoutConfirm = true
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text("Log Out")
-                            Spacer()
+                    // MARK: - Premium Banner (only show for free users)
+                    if !viewModel.isPremium {
+                        PremiumBannerView {
+                            showPaywall = true
                         }
                     }
+
+                    // MARK: - Payment Account
+                    ProfileSectionHeader(title: "PAYMENT ACCOUNT")
+                    paymentAccountSection
+
+                    // MARK: - Groups and Friends
+                    ProfileSectionHeader(title: "PEOPLE AND GROUPS")
+                    groupsAndFriendsSection
+
+                    // MARK: - Preferences
+                    ProfileSectionHeader(title: "PREFERENCES")
+                    preferencesSection
+
+                    // MARK: - About
+                    ProfileSectionHeader(title: "ABOUT")
+                    aboutSection
                 }
             }
-            .navigationTitle("Profile")
+            .background(Color(.systemGroupedBackground))
+            .navigationBarTitleDisplayMode(.inline)
             .alert(
                 "Log Out",
                 isPresented: $showLogoutConfirm
@@ -88,9 +76,130 @@ struct ProfileView: View {
             } message: {
                 Text("Are you sure you want to log out?")
             }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK", role: .cancel) {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                Text(viewModel.errorMessage ?? "An error occurred")
+            }
+            .fullScreenCover(isPresented: $showPaywall) {
+                PaywallView()
+            }
+            .sheet(isPresented: $showEditProfile) {
+                EditProfileView(
+                    currentName: viewModel.fullName,
+                    currentEmail: viewModel.email,
+                    currentPhone: viewModel.phoneNumber
+                ) { name, email, phone in
+                    viewModel.updateProfile(name: name, email: email, phone: phone)
+                }
+            }
         }
         .onAppear {
             viewModel.injectContext(modelContext)
         }
     }
+
+
+    // MARK: - Payment Account Section
+    private var paymentAccountSection: some View {
+        NavigationLink {
+            if let user = viewModel.user {
+                PaymentMethodListView(methods: viewModel.paymentMethods, user: user)
+            } else {
+                PaymentMethodEmptyStateView()
+            }
+        } label: {
+            ProfileMenuRow(
+                title: viewModel.paymentMethods.first?.providerName ?? "Add Payment",
+                type: .navigation
+            )
+        }
+    }
+
+    // MARK: - Groups and Friends Section
+    private var groupsAndFriendsSection: some View {
+        NavigationLink {
+            ContactsView()
+        } label: {
+            ProfileMenuRow(
+                title: "Your Friends and Groups",
+                type: .navigation
+            )
+        }
+    }
+
+    // MARK: - Preferences Section
+    private var preferencesSection: some View {
+        VStack(spacing: 0) {
+            // Theme
+            ProfileMenuRow(
+                title: "Theme",
+                type: .menu(selectedValue: $viewModel.selectedTheme, options: ProfileViewModel.themeOptions)
+            )
+
+            Divider()
+                .padding(.leading, AppSpacing.lg)
+
+            // Notifications
+            ProfileMenuRow(
+                title: "Notifications",
+                type: .toggle(isOn: $viewModel.notificationsEnabled)
+            )
+
+            Divider()
+                .padding(.leading, AppSpacing.lg)
+
+            // Language
+            ProfileMenuRow(
+                title: "Language",
+                type: .menu(selectedValue: $viewModel.selectedLanguage, options: ProfileViewModel.languageOptions)
+            )
+        }
+        .background(Color(.systemBackground))
+    }
+
+    // MARK: - About Section
+    private var aboutSection: some View {
+        VStack(spacing: 0) {
+            // Report problems
+            ProfileMenuRow(
+                title: "Report problems",
+                type: .button,
+                action: {
+                    // Open report URL
+                }
+            )
+
+            Divider()
+                .padding(.leading, AppSpacing.lg)
+
+            // Privacy policy
+            ProfileMenuRow(
+                title: "Privacy policy",
+                type: .button,
+                action: {
+                    // Open privacy policy URL
+                }
+            )
+
+            Divider()
+                .padding(.leading, AppSpacing.lg)
+
+            // Version
+            ProfileMenuRow(
+                title: "Version",
+                type: .textOnly(value: ProfileViewModel.appVersion)
+            )
+        }
+        .background(Color(.systemBackground))
+        .padding(.bottom, 32)
+    }
 }
+
+
+#Preview {
+    ProfileView()
+}
+

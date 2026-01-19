@@ -20,3 +20,8 @@ struct AuthGateView: View {
         }
     }
 }
+
+#Preview {
+    AuthGateView()
+        .environmentObject(AppAuthState())
+}
