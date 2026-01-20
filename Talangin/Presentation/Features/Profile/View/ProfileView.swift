@@ -64,7 +64,8 @@ struct ProfileView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.large)
             .alert(
                 "Log Out",
                 isPresented: $showLogoutConfirm
