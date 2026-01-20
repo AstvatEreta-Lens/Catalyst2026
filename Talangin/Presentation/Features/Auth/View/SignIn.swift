@@ -1,39 +1,75 @@
 //
-//  Login.swift
+//  SignIn.swift
 //  Talangin
 //
 //  Created by Ahmad Al Wabil on 01/01/26.
+//  Updated by Rifqi Rahman on 19/01/26.
 //
+//  Sign-in screen with gradient header and card-based form layout.
+//  Supports email/password login and Sign in with Apple.
+//
+//  BACKEND DEVELOPER NOTES:
+//  -------------------------
+//  Authentication Flow:
+//  1. Email/Password Login:
+//     - Validate credentials against your auth service (Firebase Auth, custom API, etc.)
+//     - On success, store user session token securely in Keychain
+//     - On failure, display error message via viewModel.errorMessage
+//
+//  2. Sign in with Apple:
+//     - Already implemented using ASAuthorizationAppleIDCredential
+//     - credential.user is the unique Apple User ID
+//     - Email and name are only provided on FIRST sign-in
+//     - Store Apple User ID in Keychain for persistence
+//
+//  3. Forgot Password:
+//     - Implement password reset flow (email link or code)
+//     - Show confirmation that reset email was sent
+//
+//  API Endpoints to implement:
+//  - POST /auth/login { email, password } -> { token, user }
+//  - POST /auth/forgot-password { email } -> { success }
+//
+
 import SwiftUI
 import AuthenticationServices
 import SwiftData
 
 struct SignInView: View {
-
+    
+    // MARK: - Environment
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var authState: AppAuthState
-
+    
+    // MARK: - ViewModel
     @StateObject private var viewModel = AuthViewModel()
-
-
+    
+    // MARK: - Local State
+    @State private var showPassword = false
+    
     var body: some View {
         NavigationStack {
-            VStack(spacing: AppSpacing.lg) {
-
-                header
-                form
-                loginButton
-
-                Divider()
-
-                appleSignIn
-
-                Spacer()
-
-                footer
+            ZStack(alignment: .top) {
+                // MARK: - Background
+                Color(.systemBackground)
+                    .ignoresSafeArea()
+                
+                // MARK: - Gradient Background
+                gradientBackground
+                
+                // MARK: - White Card Content
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Spacer for gradient area
+                        Color.clear
+                            .frame(height: 200)
+                        
+                        // Card Content
+                        cardContent
+                    }
+                }
             }
-            .padding(.horizontal, AppSpacing.lg)
             .navigationBarHidden(true)
             .alert(
                 "Error",
@@ -46,79 +82,148 @@ struct SignInView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+            .navigationDestination(isPresented: $viewModel.showSignUp) {
+                SignUpView()
+            }
         }
         .onAppear {
-            // inject real context once view appears
             viewModel.injectContext(modelContext)
         }
     }
-}
-
-private extension SignInView {
-    var header: some View {
+    
+    // MARK: - Card Content
+    private var cardContent: some View {
+        VStack(spacing: AppSpacing.lg) {
+            // MARK: - Header Text
+            headerSection
+            
+            // MARK: - Form Fields
+            formSection
+            
+            // MARK: - Forgot Password
+            forgotPasswordButton
+            
+            // MARK: - Login Button
+            loginButton
+            
+            // MARK: - Divider
+            orDivider
+            
+            // MARK: - Apple Sign In
+            appleSignInButton
+            
+            Spacer(minLength: AppSpacing.xl)
+            
+            // MARK: - Footer
+            footerSection
+        }
+        .padding(.horizontal, AppSpacing.xl)
+        .padding(.top, AppSpacing.xl)
+        .padding(.bottom, AppSpacing.lg)
+        .background(
+            RoundedCorner(radius: 24, corners: [.topLeft, .topRight])
+                .fill(Color(.systemBackground))
+        )
+    }
+    
+    // MARK: - Header Section
+    private var headerSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Text("Talangin")
-                .font(.largeTitle)
-                .bold()
-
-            Text("Silakan masuk untuk melanjutkan aplikasi.")
-                .font(.subheadline)
+            Text("Welcome")
+                .font(.Title1)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            Text("Join us to track, split, and settle bills with ease")
+                .font(.Subheadline)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, AppSpacing.xl)
     }
-}
-
-private extension SignInView {
-    var form: some View {
-        VStack(spacing: AppSpacing.sm) {
-            AuthTextField(
-                image: AppIcons.Auth.email,
-                placeholder: "Email",
-                text: $viewModel.email
+    
+    // MARK: - Form Section
+    private var formSection: some View {
+        VStack(spacing: AppSpacing.md) {
+            // Email Field
+            OnboardingTextField(
+                placeholder: "Email Address",
+                text: $viewModel.email,
+                keyboardType: .emailAddress,
+                showClearButton: true
             )
-
-            AuthTextField(
-                image: AppIcons.Auth.password,
+            
+            // Password Field
+            OnboardingTextField(
                 placeholder: "Password",
                 text: $viewModel.password,
-                isSecure: true
+                isSecure: !showPassword,
+                showVisibilityToggle: true,
+                isPasswordVisible: $showPassword
             )
-
-            Button("Forgot Password?") {
-                // TODO
-            }
-            .font(.footnote)
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
-}
-
-private extension SignInView {
-    var loginButton: some View {
+    
+    // MARK: - Forgot Password Button
+    private var forgotPasswordButton: some View {
+        HStack {
+            Spacer()
+            Button {
+                // BACKEND NOTE: Implement forgot password flow
+            } label: {
+                Text("Forgot password?")
+                    .font(.Subheadline)
+                    .foregroundColor(AppColors.primary)
+            }
+        }
+    }
+    
+    // MARK: - Login Button
+    private var loginButton: some View {
         Button {
             viewModel.loginWithEmail()
         } label: {
-            Text("Login")
+            Text("Log In")
+                .font(.Headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(Color.accentColor)
-                .cornerRadius(12)
+                .padding(.vertical, AppSpacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppColors.primary)
+                )
+        }
+        .disabled(viewModel.email.isEmpty || viewModel.password.isEmpty)
+        .opacity(viewModel.email.isEmpty || viewModel.password.isEmpty ? 0.6 : 1)
+    }
+    
+    // MARK: - Or Divider
+    private var orDivider: some View {
+        HStack {
+            Rectangle()
+                .fill(Color(.systemGray4))
+                .frame(height: 1)
+            
+            Text("Or")
+                .font(.Subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, AppSpacing.sm)
+            
+            Rectangle()
+                .fill(Color(.systemGray4))
+                .frame(height: 1)
         }
     }
-}
-
-private extension SignInView {
-    var appleSignIn: some View {
+    
+    // MARK: - Apple Sign In Button
+    private var appleSignInButton: some View {
         SignInWithAppleButton(
             .signIn,
             onRequest: viewModel.configureAppleRequest,
             onCompletion: { result in
                 viewModel.handleAppleResult(result) {
                     authState.isAuthenticated = true
+                    authState.needsOnboarding = true
                 }
             }
         )
@@ -126,23 +231,22 @@ private extension SignInView {
         .frame(height: 50)
         .cornerRadius(12)
     }
-}
-
-
-private extension SignInView {
-    var footer: some View {
-        HStack {
-            Text("Don't have an account?")
-                .font(.footnote)
+    
+    // MARK: - Footer Section
+    private var footerSection: some View {
+        HStack(spacing: AppSpacing.xxs) {
+            Text("Don't have any account?")
+                .font(.Subheadline)
                 .foregroundColor(.secondary)
-
-            Button("Sign Up") {
+            
+            Button {
                 viewModel.showSignUp = true
+            } label: {
+                Text("Sign Up")
+                    .font(.Subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(AppColors.primary)
             }
-            .font(.footnote.bold())
-        }
-        .navigationDestination(isPresented: $viewModel.showSignUp) {
-            SignUp()
         }
         .padding(.bottom, AppSpacing.md)
     }
