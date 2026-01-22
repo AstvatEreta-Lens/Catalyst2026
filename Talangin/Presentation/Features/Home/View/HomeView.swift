@@ -30,10 +30,10 @@ struct HomeView: View {
             VStack {
                         // Panggil dari enum L10n yang kita buat
                         Text(L10n.Common.welcome)
-                            .font(.appTitle1) // Pakai font yang sudah kita buat sebelumnya
+                            .font(.Title1) // Pakai font yang sudah kita buat sebelumnya
                         
                         Text(L10n.Common.save)
-                            .font(.appBody)
+                            .font(.Title2)
                     }
                     .padding()
         }
