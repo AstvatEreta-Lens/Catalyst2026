@@ -48,7 +48,11 @@ struct ProfileView: View {
 
                     // MARK: - Payment Account
                     ProfileSectionHeader(title: "PAYMENT ACCOUNT")
-                    paymentAccountSection
+                    Section{
+                        paymentAccountSection
+                    }
+            
+                    
 
                     // MARK: - Groups and Friends
                     ProfileSectionHeader(title: "PEOPLE AND GROUPS")
