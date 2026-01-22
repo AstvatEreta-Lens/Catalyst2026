@@ -8,16 +8,45 @@
 import SwiftUI
 import Combine
 
-class MainTabViewModel: ObservableObject {
+@MainActor
+final class MainTabViewModel: ObservableObject {
+
+    // Tab
     @Published var selectedTab: TabDestination = .home
-    @Published var tabs: [TabItem] = [
+
+    // Sheet
+    @Published var showAddSheet: Bool = false
+
+    // Navigation
+    @Published var route: MainRoute?
+
+    let tabs: [TabItem] = [
         TabItem(title: "Home", icon: AppIcons.Navigation.home, destination: .home),
-        TabItem(title: "Friends", icon: AppIcons.Navigation.friend, destination: .friends),
         TabItem(title: "Profile", icon: AppIcons.Navigation.profile, destination: .profile)
     ]
-    
-    // Customization logic can be added here
-    func changeTab(to destination: TabDestination) {
-        selectedTab = destination
+
+    // MARK: - Intents
+
+    func handleAddButtonTap() {
+        showAddSheet = true
+    }
+
+    func goToAddExpense() {
+        showAddSheet = false
+        route = .addExpense
+    }
+
+    func goToCreateGroup() {
+        showAddSheet = false
+        route = .createGroup
+    }
+
+    func goToJoinWithLink() {
+        showAddSheet = false
+        route = .joinWithLink
+    }
+
+    func clearRoute() {
+        route = nil
     }
 }

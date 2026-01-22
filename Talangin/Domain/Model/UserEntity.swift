@@ -9,12 +9,12 @@
 import SwiftData
 import Foundation
 
+
 @Model
 final class UserEntity {
 
     // MARK: - Identity
-    @Attribute(.unique)
-    var appleUserId: String
+    var appleUserId: String?
 
     // MARK: - Profile Info
     var fullName: String?
@@ -25,12 +25,15 @@ final class UserEntity {
     var profilePhotoData: Data?   // simpan sebagai Data (JPEG/PNG)
 
     // MARK: - Relationships
-    @Relationship(deleteRule: .cascade)
-    var paymentMethods: [PaymentMethodEntity] = []
+    @Relationship(deleteRule: .cascade, inverse: \PaymentMethodEntity.user)
+    var paymentMethods: [PaymentMethodEntity]? = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \SplitParticipantEntity.user)
+    var splitParticipants: [SplitParticipantEntity]? = []
 
     // MARK: - Metadata
-    var createdAt: Date
-    var updatedAt: Date
+    var createdAt: Date?
+    var updatedAt: Date?
 
     init(
         appleUserId: String,

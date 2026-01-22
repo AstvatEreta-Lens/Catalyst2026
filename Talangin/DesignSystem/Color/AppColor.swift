@@ -8,7 +8,7 @@
 import SwiftUI
 
 // Sesuaikan dengan yang ada di figma
-enum AppColors {
+enum AppColors{
 
     // Text
     static let primaryText = ColorTokens.gray600

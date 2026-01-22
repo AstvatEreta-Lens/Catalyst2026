@@ -18,8 +18,8 @@ struct PaymentMethodListView: View {
                     EditPaymentMethodView(method: method)
                 } label: {
                     VStack(alignment: .leading) {
-                        Text(method.providerName)
-                        Text(method.destination)
+                        Text(method.providerName ?? "")
+                        Text(method.destination ?? "")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
