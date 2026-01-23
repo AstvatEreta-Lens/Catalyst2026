@@ -4,8 +4,15 @@
 //
 //  Created by Ahmad Al Wabil on 07/01/26.
 //
-//  Payment account list view with sections for default and other payment methods.
-//  Updated: Refactored to use iOS 18+ navigationDestination(isPresented:) API.
+//  Payment account list view using native SwiftUI List component.
+//  Displays default and other payment methods with native section headers.
+//
+//  BACKEND DEVELOPER NOTES:
+//  -------------------------
+//  This view displays PaymentMethodEntity data:
+//  1. Sorted by isDefault (default method first)
+//  2. Each row navigates to EditPaymentMethodView
+//  3. Add button presents AddPaymentMethodView sheet
 //
 
 import SwiftUI
@@ -16,15 +23,7 @@ struct PaymentMethodListView: View {
     let user: UserEntity
 
     @State private var showAddPaymentMethod = false
-    @State private var navigateToEditDefault = false
-    @State private var navigateToEditFirstOther = false
     
-    // MARK: - Initializer
-    init(methods: [PaymentMethodEntity], user: UserEntity) {
-        self.methods = methods
-        self.user = user
-    }
-
     // MARK: - Computed Properties
     private var defaultMethod: PaymentMethodEntity? {
         methods.first { $0.isDefault } ?? methods.first
@@ -38,71 +37,113 @@ struct PaymentMethodListView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // MARK: - Payment Account Section (Default)
-                if let defaultMethod = defaultMethod {
-                    PaymentSectionHeader(title: "PAYMENT ACCOUNT") {
-                        navigateToEditDefault = true
-                    }
-
+        List {
+            // MARK: - Default Payment Account
+            if let defaultMethod = defaultMethod {
+                Section {
                     NavigationLink {
                         EditPaymentMethodView(method: defaultMethod)
                     } label: {
-                        PaymentMethodRow(
+                        PaymentMethodCell(
                             providerName: defaultMethod.providerName,
                             destination: defaultMethod.destination,
                             holderName: defaultMethod.holderName,
                             isDefault: defaultMethod.isDefault
                         )
                     }
-                    .buttonStyle(PlainButtonStyle())
+                } header: {
+                    Text("PAYMENT ACCOUNT")
                 }
+            }
 
-                // MARK: - Another Account Section
-                if !otherMethods.isEmpty {
-                    PaymentSectionHeader(title: "ANOTHER ACCOUNT") {
-                        navigateToEditFirstOther = true
-                    }
-
+            // MARK: - Other Accounts
+            if !otherMethods.isEmpty {
+                Section {
                     ForEach(otherMethods) { method in
                         NavigationLink {
                             EditPaymentMethodView(method: method)
                         } label: {
-                            PaymentMethodRow(
+                            PaymentMethodCell(
                                 providerName: method.providerName,
                                 destination: method.destination,
                                 holderName: method.holderName,
                                 isDefault: method.isDefault
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
+                    }
+                } header: {
+                    Text("ANOTHER ACCOUNT")
+                }
+            }
+
+            // MARK: - Add Another Option
+            Section {
+                Button {
+                    showAddPaymentMethod = true
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppColors.success)
+                        
+                        Text("Add Another Option")
+                            .foregroundColor(.primary)
                     }
                 }
-
-                // MARK: - Add Another Option Button
-                AddPaymentMethodButton {
-                    showAddPaymentMethod = true
-                }
-                .padding(.top, AppSpacing.md)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .listStyle(.insetGrouped)
         .navigationTitle("Payment Account")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showAddPaymentMethod) {
             AddPaymentMethodView(user: user)
         }
-        .navigationDestination(isPresented: $navigateToEditDefault) {
-            if let defaultMethod = defaultMethod {
-                EditPaymentMethodView(method: defaultMethod)
+    }
+}
+
+// MARK: - Payment Method Cell
+
+private struct PaymentMethodCell: View {
+    let providerName: String
+    let destination: String
+    let holderName: String
+    let isDefault: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            // Provider Name with badge
+            HStack {
+                Text(providerName)
+                    .font(.Body)
+                    .fontWeight(.medium)
+                
+                if isDefault {
+                    Text("Default")
+                        .font(.Caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, AppSpacing.xs)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(AppColors.accentWater)
+                        )
+                }
+            }
+            
+            // Account Number
+            Text(destination)
+                .font(.Subheadline)
+                .foregroundColor(.secondary)
+            
+            // Holder Name
+            if !holderName.isEmpty {
+                Text(holderName)
+                    .font(.Subheadline)
+                    .foregroundColor(.secondary)
             }
         }
-        .navigationDestination(isPresented: $navigateToEditFirstOther) {
-            if let firstOther = otherMethods.first {
-                EditPaymentMethodView(method: firstOther)
-            }
-        }
+        .padding(.vertical, AppSpacing.xs)
     }
 }
 
@@ -126,9 +167,6 @@ private struct PaymentMethodListPreview: View {
                         .foregroundColor(.orange)
                     Text("Preview Error")
                         .font(.headline)
-                    Text("Failed to load SwiftData container")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             } else if let container = container, let user = user {
                 NavigationStack {
@@ -150,7 +188,6 @@ private struct PaymentMethodListPreview: View {
                 configurations: config
             )
 
-            // Create mock payment methods
             let mockUser = UserEntity(appleUserId: "preview")
             let method1 = PaymentMethodEntity(
                 providerName: "BCA",
@@ -167,7 +204,6 @@ private struct PaymentMethodListPreview: View {
                 user: mockUser
             )
 
-            // Insert into context on main actor
             let context = newContainer.mainContext
             context.insert(mockUser)
             context.insert(method1)

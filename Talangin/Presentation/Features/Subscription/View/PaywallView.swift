@@ -72,17 +72,14 @@ struct PaywallView: View {
             .ignoresSafeArea(edges: .top)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white.opacity(0.9), .white.opacity(0.3))
                     }
                 }
             }
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationDestination(isPresented: $showSubscriptionInfo) {
                 SubscriptionInfoView()
             }

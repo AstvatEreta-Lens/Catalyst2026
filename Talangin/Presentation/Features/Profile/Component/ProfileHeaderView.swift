@@ -35,7 +35,7 @@ struct ProfileHeaderView: View {
                         .foregroundStyle(.gray)
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 80, height: 80)
             .clipShape(Circle())
             .overlay(
                 PhotosPicker(
@@ -56,44 +56,53 @@ struct ProfileHeaderView: View {
             }
 
             // MARK: - Name and Email
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 HStack(spacing: AppSpacing.xs) {
                     Text(fullName.isEmpty ? "John Doe" : fullName)
                         .font(.Headline)
                         .fontWeight(.semibold)
 
-                    Text(accountBadge)
-                        .font(.Caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, AppSpacing.xs)
-                        .padding(.vertical, AppSpacing.xxs)
-                        .background(
-                            Capsule()
-                                .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
-                        )
                 }
 
                 Text(email.isEmpty ? "john.doe@gmail.com" : email)
                     .font(.Subheadline)
                     .foregroundColor(.secondary)
+                
+                Text(accountBadge)
+                    .font(.Caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, AppSpacing.xs)
+                    .padding(.vertical, AppSpacing.xxs)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
+//                        Capsule()
+//                            .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
+                    )
             }
 
             Spacer()
 
             // MARK: - Edit Button
-            Button {
-                onEditTapped()
-            } label: {
-                Image(systemName: "pencil")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.secondary)
+            VStack(alignment: .trailing){
+                Button {
+                    onEditTapped()
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+
             }
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.xxxs)
         .padding(.vertical, AppSpacing.lg)
         .background(Color(.systemBackground))
+        .frame(height: 100)
     }
+    
 }
 
 #Preview {
@@ -112,3 +121,4 @@ struct ProfileHeaderView: View {
     .padding()
     .background(Color(.systemGroupedBackground))
 }
+

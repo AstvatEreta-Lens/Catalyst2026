@@ -4,8 +4,16 @@
 //
 //  Created by Ahmad Al Wabil on 06/01/26.
 //
-//  Profile screen view with modular components for header, premium banner, and menu sections.
-//  Updated: Added edit profile sheet and paywall integration.
+//  Profile screen using native SwiftUI List component following Apple HIG.
+//  Uses native Section headers and List rows for consistent iOS experience.
+//
+//  BACKEND DEVELOPER NOTES:
+//  -------------------------
+//  This view displays user profile data from ProfileViewModel.
+//  Data flows:
+//  1. User info loaded from UserEntity via repository
+//  2. Payment methods from PaymentMethodEntity relationship
+//  3. Preferences stored in UserDefaults (theme, notifications, language)
 //
 
 import SwiftUI
@@ -23,9 +31,9 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // MARK: - Profile Header
+            List {
+                // MARK: - Profile Header Section
+                Section {
                     ProfileHeaderView(
                         profilePhotoData: viewModel.profilePhotoData,
                         fullName: viewModel.fullName,
@@ -39,32 +47,118 @@ struct ProfileView: View {
                         }
                     )
 
-                    // MARK: - Premium Banner (only show for free users)
-                    if !viewModel.isPremium {
+                }
+                
+                // MARK: - Premium Banner (only show for free users)
+                if !viewModel.isPremium {
+                    Section {
                         PremiumBannerView {
                             showPaywall = true
                         }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                     }
+                }
 
-                    // MARK: - Payment Account
-                    ProfileSectionHeader(title: "PAYMENT ACCOUNT")
-                    paymentAccountSection
+                // MARK: - Payment Account
+                Section {
+                    NavigationLink {
+                        if let user = viewModel.user {
+                            PaymentMethodListView(methods: viewModel.paymentMethods, user: user)
+                        } else {
+                            PaymentMethodEmptyStateView()
+                        }
+                    } label: {
+                        Text(viewModel.paymentMethods.first?.providerName ?? "Add Payment")
+                    }
+                } header: {
+                    Text("PAYMENT ACCOUNT")
+                }
 
-                    // MARK: - Groups and Friends
-                    ProfileSectionHeader(title: "PEOPLE AND GROUPS")
-                    groupsAndFriendsSection
+                // MARK: - People and Groups
+                Section {
+                    NavigationLink {
+                        ContactsView()
+                    } label: {
+                        Text("Your Friends and Groups")
+                    }
+                } header: {
+                    Text("PEOPLE AND GROUPS")
+                }
 
-                    // MARK: - Preferences
-                    ProfileSectionHeader(title: "PREFERENCES")
-                    preferencesSection
+                // MARK: - Preferences
+                Section {
+                    // Theme Picker
+                    Picker("Theme", selection: $viewModel.selectedTheme) {
+                        ForEach(ProfileViewModel.themeOptions, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    
+                    // Notifications Toggle
+                    Toggle("Notifications", isOn: $viewModel.notificationsEnabled)
+                        .tint(AppColors.toggleTint)
+                    
+                    // Language Picker
+                    Picker("Language", selection: $viewModel.selectedLanguage) {
+                        ForEach(ProfileViewModel.languageOptions, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                } header: {
+                    Text("PREFERENCES")
+                }
 
-                    // MARK: - About
-                    ProfileSectionHeader(title: "ABOUT")
-                    aboutSection
+                // MARK: - About
+                Section {
+                    // Report problems - external link
+                    Button {
+                        // BACKEND NOTE: Open report URL
+                        if let url = URL(string: "https://talangin.app/support") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Text("Report problems")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // Privacy policy - external link
+                    Button {
+                        // BACKEND NOTE: Open privacy policy URL
+                        if let url = URL(string: "https://talangin.app/privacy") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Text("Privacy policy")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // Version - read only
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text(ProfileViewModel.appVersion)
+                            .foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("ABOUT")
                 }
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.insetGrouped)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.large)
             .alert(
                 "Log Out",
                 isPresented: $showLogoutConfirm
@@ -86,13 +180,18 @@ struct ProfileView: View {
             .fullScreenCover(isPresented: $showPaywall) {
                 PaywallView()
             }
-            .sheet(isPresented: $showEditProfile) {
+            .fullScreenCover(isPresented: $showEditProfile) {
                 EditProfileView(
                     currentName: viewModel.fullName,
                     currentEmail: viewModel.email,
-                    currentPhone: viewModel.phoneNumber
-                ) { name, email, phone in
+                    currentPhone: viewModel.phoneNumber,
+                    currentPhotoData: viewModel.profilePhotoData,
+                    accountBadge: viewModel.isPremium ? "Premium" : "Free Account"
+                ) { name, email, phone, photoData in
                     viewModel.updateProfile(name: name, email: email, phone: phone)
+                    if let photoData = photoData {
+                        viewModel.updatePhoto(photoData)
+                    }
                 }
             }
         }
@@ -100,106 +199,9 @@ struct ProfileView: View {
             viewModel.injectContext(modelContext)
         }
     }
-
-
-    // MARK: - Payment Account Section
-    private var paymentAccountSection: some View {
-        NavigationLink {
-            if let user = viewModel.user {
-                PaymentMethodListView(methods: viewModel.paymentMethods, user: user)
-            } else {
-                PaymentMethodEmptyStateView()
-            }
-        } label: {
-            ProfileMenuRow(
-                title: viewModel.paymentMethods.first?.providerName ?? "Add Payment",
-                type: .navigation
-            )
-        }
-    }
-
-    // MARK: - Groups and Friends Section
-    private var groupsAndFriendsSection: some View {
-        NavigationLink {
-            ContactsView()
-        } label: {
-            ProfileMenuRow(
-                title: "Your Friends and Groups",
-                type: .navigation
-            )
-        }
-    }
-
-    // MARK: - Preferences Section
-    private var preferencesSection: some View {
-        VStack(spacing: 0) {
-            // Theme
-            ProfileMenuRow(
-                title: "Theme",
-                type: .menu(selectedValue: $viewModel.selectedTheme, options: ProfileViewModel.themeOptions)
-            )
-
-            Divider()
-                .padding(.leading, AppSpacing.lg)
-
-            // Notifications
-            ProfileMenuRow(
-                title: "Notifications",
-                type: .toggle(isOn: $viewModel.notificationsEnabled)
-            )
-
-            Divider()
-                .padding(.leading, AppSpacing.lg)
-
-            // Language
-            ProfileMenuRow(
-                title: "Language",
-                type: .menu(selectedValue: $viewModel.selectedLanguage, options: ProfileViewModel.languageOptions)
-            )
-        }
-        .background(Color(.systemBackground))
-    }
-
-    // MARK: - About Section
-    private var aboutSection: some View {
-        VStack(spacing: 0) {
-            // Report problems
-            ProfileMenuRow(
-                title: "Report problems",
-                type: .button,
-                action: {
-                    // Open report URL
-                }
-            )
-
-            Divider()
-                .padding(.leading, AppSpacing.lg)
-
-            // Privacy policy
-            ProfileMenuRow(
-                title: "Privacy policy",
-                type: .button,
-                action: {
-                    // Open privacy policy URL
-                }
-            )
-
-            Divider()
-                .padding(.leading, AppSpacing.lg)
-
-            // Version
-            ProfileMenuRow(
-                title: "Version",
-                type: .textOnly(value: ProfileViewModel.appVersion)
-            )
-        }
-        .background(Color(.systemBackground))
-        .padding(.bottom, 32)
-    }
 }
-
 
 #Preview {
     ProfileView()
+        .environmentObject(AppAuthState())
 }
-

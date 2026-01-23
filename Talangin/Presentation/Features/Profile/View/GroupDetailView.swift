@@ -4,8 +4,8 @@
 //
 //  Created by Rifqi Rahman on 19/01/26.
 //
-//  Group detail view showing group info, members, and navigation to expenses.
-//  Placeholder view for group management functionality.
+//  Group detail view using native SwiftUI List component.
+//  Shows group info, members, and action buttons.
 //
 //  BACKEND DEVELOPER NOTES:
 //  -------------------------
@@ -41,199 +41,116 @@ struct GroupDetailView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // MARK: - Group Header
-                groupHeader
-                
-                // MARK: - Members Section
-                membersSection
-                
-                // MARK: - Actions Section
-                actionsSection
-            }
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(group.name)
-        .navigationBarTitleDisplayMode(.large)
-    }
-    
-    // MARK: - Group Header
-    private var groupHeader: some View {
-        VStack(spacing: AppSpacing.md) {
-            // Group Icon
-            GroupIconView(group: group, size: .large)
-            
-            // Group Name
-            Text(group.name)
-                .font(.Title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            // Member Count
-            Text("\(group.memberCount > 0 ? group.memberCount : mockMembers.count) members")
-                .font(.Subheadline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AppSpacing.xl)
-        .background(Color(.systemBackground))
-    }
-    
-    // MARK: - Members Section
-    private var membersSection: some View {
-        VStack(spacing: 0) {
-            // Section Header
-            ProfileSectionHeader(title: "MEMBERS")
-            
-            // Members List
-            VStack(spacing: 0) {
-                ForEach(Array(mockMembers.enumerated()), id: \.element.id) { index, member in
-                    MemberRow(member: member, isCurrentUser: index == 0)
+        List {
+            // MARK: - Group Header
+            Section {
+                VStack(spacing: AppSpacing.md) {
+                    GroupIconView(group: group, size: .large)
                     
-                    if index < mockMembers.count - 1 {
-                        Divider()
-                            .padding(.leading, AppSpacing.lg + 40 + AppSpacing.md)
+                    Text(group.name)
+                        .font(.Title2)
+                        .fontWeight(.bold)
+                    
+                    Text("\(group.memberCount > 0 ? group.memberCount : mockMembers.count) members")
+                        .font(.Subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.lg)
+                .listRowBackground(Color(.systemBackground))
+            }
+            
+            // MARK: - Members Section
+            Section {
+                ForEach(Array(mockMembers.enumerated()), id: \.element.id) { index, member in
+                    HStack(spacing: AppSpacing.md) {
+                        ContactAvatarView(
+                            initials: member.initials,
+                            photoData: member.profilePhotoData,
+                            size: .small
+                        )
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: AppSpacing.xs) {
+                                Text(member.fullName)
+                                
+                                if index == 0 {
+                                    Text("(You)")
+                                        .font(.Subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Text(member.email)
+                                .font(.Caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
+            } header: {
+                Text("MEMBERS")
             }
-            .background(Color(.systemBackground))
-        }
-    }
-    
-    // MARK: - Actions Section
-    private var actionsSection: some View {
-        VStack(spacing: 0) {
-            // Section Header
-            ProfileSectionHeader(title: "ACTIONS")
             
-            VStack(spacing: 0) {
+            // MARK: - Actions Section
+            Section {
                 // View Expenses
-                ActionRow(
-                    icon: "list.bullet.rectangle",
-                    title: "View Expenses",
-                    iconColor: .blue
-                ) {
+                Button {
                     // BACKEND NOTE: Navigate to group expenses list
+                } label: {
+                    Label {
+                        Text("View Expenses")
+                            .foregroundColor(.primary)
+                    } icon: {
+                        Image(systemName: "list.bullet.rectangle")
+                            .foregroundColor(.blue)
+                    }
                 }
-                
-                Divider()
-                    .padding(.leading, AppSpacing.lg + 40 + AppSpacing.md)
                 
                 // Add Expense
-                ActionRow(
-                    icon: "plus.circle.fill",
-                    title: "Add Expense",
-                    iconColor: .green
-                ) {
+                Button {
                     // BACKEND NOTE: Navigate to add expense flow
-                }
-                
-                Divider()
-                    .padding(.leading, AppSpacing.lg + 40 + AppSpacing.md)
-                
-                // Settle Up
-                ActionRow(
-                    icon: "checkmark.circle.fill",
-                    title: "Settle Up",
-                    iconColor: .orange
-                ) {
-                    // BACKEND NOTE: Navigate to settle up flow
-                }
-                
-                Divider()
-                    .padding(.leading, AppSpacing.lg + 40 + AppSpacing.md)
-                
-                // Group Settings
-                ActionRow(
-                    icon: "gearshape.fill",
-                    title: "Group Settings",
-                    iconColor: .gray
-                ) {
-                    // BACKEND NOTE: Navigate to group settings
-                }
-            }
-            .background(Color(.systemBackground))
-        }
-        .padding(.bottom, AppSpacing.xl)
-    }
-}
-
-// MARK: - Member Row
-
-private struct MemberRow: View {
-    let member: ContactEntity
-    let isCurrentUser: Bool
-    
-    var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            // Avatar
-            ContactAvatarView(
-                initials: member.initials,
-                photoData: member.profilePhotoData,
-                size: .small
-            )
-            
-            // Name
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: AppSpacing.xs) {
-                    Text(member.fullName)
-                        .font(.Body)
-                        .foregroundColor(.primary)
-                    
-                    if isCurrentUser {
-                        Text("(You)")
-                            .font(.Subheadline)
-                            .foregroundColor(.secondary)
+                } label: {
+                    Label {
+                        Text("Add Expense")
+                            .foregroundColor(.primary)
+                    } icon: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(AppColors.success)
                     }
                 }
                 
-                Text(member.email)
-                    .font(.Caption)
-                    .foregroundColor(.secondary)
+                // Settle Up
+                Button {
+                    // BACKEND NOTE: Navigate to settle up flow
+                } label: {
+                    Label {
+                        Text("Settle Up")
+                            .foregroundColor(.primary)
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.orange)
+                    }
+                }
+                
+                // Group Settings
+                Button {
+                    // BACKEND NOTE: Navigate to group settings
+                } label: {
+                    Label {
+                        Text("Group Settings")
+                            .foregroundColor(.primary)
+                    } icon: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.gray)
+                    }
+                }
+            } header: {
+                Text("ACTIONS")
             }
-            
-            Spacer()
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.md)
-    }
-}
-
-// MARK: - Action Row
-
-private struct ActionRow: View {
-    let icon: String
-    let title: String
-    let iconColor: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            HStack(spacing: AppSpacing.md) {
-                // Icon
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(iconColor)
-                    .frame(width: 40, height: 40)
-                
-                // Title
-                Text(title)
-                    .font(.Body)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                // Chevron
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.vertical, AppSpacing.md)
-        }
+        .listStyle(.insetGrouped)
+        .navigationTitle(group.name)
+        .navigationBarTitleDisplayMode(.large)
     }
 }
 

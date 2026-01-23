@@ -4,8 +4,8 @@
 //
 //  Created by Rifqi Rahman on 19/01/26.
 //
-//  Friend detail view showing profile header, payment account, and shared groups.
-//  Displays comprehensive information about a contact/friend.
+//  Friend detail view using native SwiftUI List component.
+//  Shows profile header, payment account, and shared groups.
 //
 //  BACKEND DEVELOPER NOTES:
 //  -------------------------
@@ -51,124 +51,63 @@ struct FriendDetailView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // MARK: - Gradient Header
+        List {
+            // MARK: - Profile Header
+            Section {
                 GradientHeaderView(
                     photoData: contact.profilePhotoData,
                     initials: contact.initials,
                     name: contact.fullName,
                     subtitle: contact.email
                 )
-                
-                // MARK: - Content
-                VStack(spacing: 0) {
-                    // Payment Account Section
-                    paymentAccountSection
-                    
-                    // Shared Groups Section
-                    if !sharedGroups.isEmpty {
-                        sharedGroupsSection
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+            }
+            
+            // MARK: - Payment Account Section
+            Section {
+                Button {
+                    showPaymentSheet = true
+                } label: {
+                    HStack {
+                        Text(primaryPayment?.providerName ?? "No payment method")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
                     }
                 }
-                .padding(.top, AppSpacing.md)
+            } header: {
+                Text("PAYMENT ACCOUNT")
+            }
+            
+            // MARK: - Shared Groups Section
+            if !sharedGroups.isEmpty {
+                Section {
+                    ForEach(sharedGroups) { group in
+                        NavigationLink {
+                            GroupDetailView(group: group)
+                        } label: {
+                            HStack(spacing: AppSpacing.md) {
+                                GroupIconView(group: group, size: .small)
+                                Text(group.name)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("SHARED GROUPS")
+                }
             }
         }
-        .background(Color(.systemGroupedBackground))
-        .ignoresSafeArea(edges: .top)
+        .listStyle(.insetGrouped)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("") // Empty title since header shows name
-            }
-        }
         .sheet(isPresented: $showPaymentSheet) {
             FriendPaymentAccountSheet(
                 contactName: contact.fullName,
                 paymentMethods: mockPaymentMethods
             )
         }
-    }
-    
-    // MARK: - Payment Account Section
-    private var paymentAccountSection: some View {
-        VStack(spacing: 0) {
-            // Section Header
-            ProfileSectionHeader(title: "PAYMENT ACCOUNT")
-            
-            // Payment Row
-            Button {
-                showPaymentSheet = true
-            } label: {
-                HStack {
-                    Text(primaryPayment?.providerName ?? "No payment method")
-                        .font(.Body)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.vertical, AppSpacing.md)
-                .background(Color(.systemBackground))
-            }
-        }
-    }
-    
-    // MARK: - Shared Groups Section
-    private var sharedGroupsSection: some View {
-        VStack(spacing: 0) {
-            // Section Header
-            ProfileSectionHeader(title: "SHARED GROUP")
-            
-            // Groups List
-            VStack(spacing: 0) {
-                ForEach(Array(sharedGroups.enumerated()), id: \.element.id) { index, group in
-                    NavigationLink {
-                        GroupDetailView(group: group)
-                    } label: {
-                        SharedGroupRow(group: group)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    if index < sharedGroups.count - 1 {
-                        Divider()
-                            .padding(.leading, AppSpacing.lg + 40 + AppSpacing.md)
-                    }
-                }
-            }
-            .background(Color(.systemBackground))
-        }
-    }
-}
-
-// MARK: - Shared Group Row
-
-private struct SharedGroupRow: View {
-    let group: GroupEntity
-    
-    var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            // Group Icon
-            GroupIconView(group: group, size: .small)
-            
-            // Group Name
-            Text(group.name)
-                .font(.Body)
-                .foregroundColor(.primary)
-            
-            Spacer()
-            
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
-        }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.md)
     }
 }
 
