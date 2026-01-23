@@ -27,26 +27,34 @@ struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showLogoutConfirm = false
     @State private var showPaywall = false
-    @State private var showEditProfile = false
 
     var body: some View {
         NavigationStack {
             List {
                 // MARK: - Profile Header Section
                 Section {
-                    ProfileHeaderView(
-                        profilePhotoData: viewModel.profilePhotoData,
-                        fullName: viewModel.fullName,
-                        email: viewModel.email,
-                        accountBadge: viewModel.isPremium ? "Premium" : "Free Account",
-                        onEditTapped: {
-                            showEditProfile = true
-                        },
-                        onPhotoChanged: { data in
-                            viewModel.updatePhoto(data)
+                    NavigationLink {
+                        EditProfileView(
+                            currentName: viewModel.fullName,
+                            currentEmail: viewModel.email,
+                            currentPhone: viewModel.phoneNumber,
+                            currentPhotoData: viewModel.profilePhotoData,
+                            accountBadge: viewModel.isPremium ? "Premium" : "Free Account"
+                        ) { name, email, phone, photoData in
+                            viewModel.updateProfile(name: name, email: email, phone: phone)
+                            if let photoData = photoData {
+                                viewModel.updatePhoto(photoData)
+                            }
                         }
-                    )
-
+                    } label: {
+                        ProfileHeaderView(
+                            profilePhotoData: viewModel.profilePhotoData,
+                            fullName: viewModel.fullName,
+                            email: viewModel.email,
+                            accountBadge: viewModel.isPremium ? "Premium" : "Free Account"
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
                 
                 // MARK: - Premium Banner (only show for free users)
@@ -69,7 +77,8 @@ struct ProfileView: View {
                             PaymentMethodEmptyStateView()
                         }
                     } label: {
-                        Text(viewModel.paymentMethods.first?.providerName ?? "Add Payment")
+                        Text(viewModel.paymentMethods.first?.providerName ?? "Set payment account")
+                            .foregroundStyle(Color(.secondaryLabel))
                     }
                 } header: {
                     Text("PAYMENT ACCOUNT")
@@ -114,7 +123,7 @@ struct ProfileView: View {
                     // Report problems - external link
                     Button {
                         // BACKEND NOTE: Open report URL
-                        if let url = URL(string: "https://talangin.app/support") {
+                        if let url = URL(string: "https://github.com/rifqi-rahman/Talangin/discussions") {
                             UIApplication.shared.open(url)
                         }
                     } label: {
@@ -128,10 +137,27 @@ struct ProfileView: View {
                         }
                     }
                     
+                    // Terms of Service - external link
+                    Button {
+                        // BACKEND NOTE: Open report URL
+                        if let url = URL(string: "https://rifqi-rahman.github.io/Talangin/terms.html") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Text("Terms of Service")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
                     // Privacy policy - external link
                     Button {
                         // BACKEND NOTE: Open privacy policy URL
-                        if let url = URL(string: "https://talangin.app/privacy") {
+                        if let url = URL(string: "https://rifqi-rahman.github.io/Talangin/privacy.html") {
                             UIApplication.shared.open(url)
                         }
                     } label: {
@@ -179,20 +205,6 @@ struct ProfileView: View {
             }
             .fullScreenCover(isPresented: $showPaywall) {
                 PaywallView()
-            }
-            .fullScreenCover(isPresented: $showEditProfile) {
-                EditProfileView(
-                    currentName: viewModel.fullName,
-                    currentEmail: viewModel.email,
-                    currentPhone: viewModel.phoneNumber,
-                    currentPhotoData: viewModel.profilePhotoData,
-                    accountBadge: viewModel.isPremium ? "Premium" : "Free Account"
-                ) { name, email, phone, photoData in
-                    viewModel.updateProfile(name: name, email: email, phone: phone)
-                    if let photoData = photoData {
-                        viewModel.updatePhoto(photoData)
-                    }
-                }
             }
         }
         .onAppear {

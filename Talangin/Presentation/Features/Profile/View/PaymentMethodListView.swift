@@ -33,7 +33,8 @@ struct PaymentMethodListView: View {
         if let defaultMethod = defaultMethod {
             return methods.filter { $0.id != defaultMethod.id }
         }
-        return Array(methods.dropFirst())
+        // If no default method, return all methods (not dropping first)
+        return methods
     }
 
     var body: some View {
@@ -144,76 +145,5 @@ private struct PaymentMethodCell: View {
             }
         }
         .padding(.vertical, AppSpacing.xs)
-    }
-}
-
-#Preview {
-    PaymentMethodListPreview()
-}
-
-@MainActor
-private struct PaymentMethodListPreview: View {
-    @State private var container: ModelContainer?
-    @State private var methods: [PaymentMethodEntity] = []
-    @State private var user: UserEntity?
-    @State private var hasError = false
-    
-    var body: some View {
-        Group {
-            if hasError {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text("Preview Error")
-                        .font(.headline)
-                }
-            } else if let container = container, let user = user {
-                NavigationStack {
-                    PaymentMethodListView(methods: methods, user: user)
-                        .modelContainer(container)
-                }
-            } else {
-                ProgressView()
-                    .onAppear { setupPreview() }
-            }
-        }
-    }
-    
-    private func setupPreview() {
-        do {
-            let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            let newContainer = try ModelContainer(
-                for: Item.self, UserEntity.self, PaymentMethodEntity.self,
-                configurations: config
-            )
-
-            let mockUser = UserEntity(appleUserId: "preview")
-            let method1 = PaymentMethodEntity(
-                providerName: "BCA",
-                destination: "120-12038-19333",
-                holderName: "Rifqi Smith",
-                isDefault: true,
-                user: mockUser
-            )
-            let method2 = PaymentMethodEntity(
-                providerName: "GoPay",
-                destination: "081234566767",
-                holderName: "Rifqi Smith",
-                isDefault: false,
-                user: mockUser
-            )
-
-            let context = newContainer.mainContext
-            context.insert(mockUser)
-            context.insert(method1)
-            context.insert(method2)
-            
-            self.container = newContainer
-            self.user = mockUser
-            self.methods = [method1, method2]
-        } catch {
-            hasError = true
-        }
     }
 }

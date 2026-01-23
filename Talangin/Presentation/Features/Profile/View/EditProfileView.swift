@@ -4,8 +4,9 @@
 //
 //  Created by Rifqi Rahman on 19/01/26.
 //
-//  Edit profile view with gradient header and profile photo editing.
-//  Supports camera capture, photo library selection, and emoji stickers.
+//  Profile view with view/edit modes. Shows profile info read-only by default.
+//  Tapping "Edit" button enables editing mode with "Save" button.
+//  Uses SwiftUI, PhotosUI, and AVFoundation for photo selection.
 //
 //  BACKEND DEVELOPER NOTES:
 //  -------------------------
@@ -39,18 +40,29 @@ struct EditProfileView: View {
     let onSave: (String, String, String?, Data?) -> Void
     
     // MARK: - Local State
+    @State private var isEditing = false
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var phone: String = ""
     @State private var profilePhotoData: Data?
     @State private var showPhotoOptions = false
-    @State private var showImagePicker = false
-    @State private var showCamera = false
     @State private var showEmojiPicker = false
-    @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showValidationError = false
     @State private var validationMessage = ""
-    @State private var showCameraUnavailableAlert = false
+    @State private var showCamera = false
+    
+    // PhotosPicker state
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var showPhotoPicker = false
+    
+    // Pending action after sheet dismissal
+    @State private var pendingAction: PhotoAction? = nil
+    
+    private enum PhotoAction {
+        case camera
+        case library
+        case emoji
+    }
     
     var body: some View {
         NavigationStack {
@@ -77,91 +89,80 @@ struct EditProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                    Button("Back") {
+                        if isEditing {
+                            // Cancel editing - revert changes
+                            cancelEditing()
+                        } else {
+                            dismiss()
+                        }
                     }
+                    .foregroundColor(.white)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveProfile()
+                    if isEditing {
+                        Button("Save") {
+                            saveProfile()
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .disabled(!hasChanges || !isValid)
+                        .opacity(hasChanges && isValid ? 1 : 0.6)
+                    } else {
+                        Button("Edit") {
+                            startEditing()
+                        }
+                        .foregroundColor(.white)
                     }
-                    .fontWeight(.semibold)
-                    .disabled(!hasChanges || !isValid)
                 }
             }
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .sheet(isPresented: $showPhotoOptions) {
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showPhotoOptions, onDismiss: handlePhotoOptionsDismissed) {
                 PhotoOptionsSheet(
                     onTakePhoto: {
+                        pendingAction = .camera
                         showPhotoOptions = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            // Check if camera is available
-                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                                showCamera = true
-                            } else {
-                                showCameraUnavailableAlert = true
-                            }
-                        }
                     },
                     onChoosePhoto: {
+                        pendingAction = .library
                         showPhotoOptions = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showImagePicker = true
-                        }
                     },
                     onEmojiSticker: {
+                        pendingAction = .emoji
                         showPhotoOptions = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showEmojiPicker = true
-                        }
                     }
                 )
                 .presentationDetents([.height(280)])
                 .presentationDragIndicator(.visible)
             }
-            .photosPicker(
-                isPresented: $showImagePicker,
-                selection: $selectedPhotoItem,
-                matching: .images
-            )
             .fullScreenCover(isPresented: $showCamera) {
-                CameraPickerView { image in
-                    if let image = image,
-                       let data = image.jpegData(compressionQuality: 0.6) {
-                        profilePhotoData = data
-                    }
+                CameraView(isPresented: $showCamera) { imageData in
+                    profilePhotoData = imageData
                 }
-                .ignoresSafeArea()
+            }
+            .photosPicker(
+                isPresented: $showPhotoPicker,
+                selection: $selectedPhotoItem,
+                matching: .images,
+                photoLibrary: .shared()
+            )
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                Task {
+                    await loadPhoto(from: newItem)
+                }
             }
             .sheet(isPresented: $showEmojiPicker) {
                 EmojiStickerPicker { emoji in
-                    // Create an image from the emoji
-                    if let emojiImage = createEmojiImage(emoji: emoji),
-                       let data = emojiImage.pngData() {
-                        profilePhotoData = data
-                    }
+                    profilePhotoData = createEmojiImageData(emoji: emoji)
                 }
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
-            }
-            .onChange(of: selectedPhotoItem) { _, newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        profilePhotoData = data
-                    }
-                }
             }
             .alert("Validation Error", isPresented: $showValidationError) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(validationMessage)
-            }
-            .alert("Camera Unavailable", isPresented: $showCameraUnavailableAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Camera is not available on this device. Please use the simulator with a physical device or choose a photo from your library.")
             }
             .onAppear {
                 name = currentName
@@ -191,43 +192,30 @@ struct EditProfileView: View {
             
             // Profile Photo Section
             VStack(spacing: AppSpacing.md) {
-                // Profile Photo with Camera Button
-                ZStack(alignment: .bottomTrailing) {
-                    // Photo
-                    if let photoData = profilePhotoData,
-                       let uiImage = UIImage(data: photoData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                    } else {
-                        Circle()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(width: 100, height: 100)
-                            .overlay(
-                                Text(initials)
-                                    .font(.Title1)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                            )
-                    }
-                    
-                    // Camera Button
+                // Profile Photo - Only tappable in edit mode
+                if isEditing {
                     Button {
                         showPhotoOptions = true
                     } label: {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gray)
-                            )
-                            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                        ZStack(alignment: .bottomTrailing) {
+                            profileImageView
+                            
+                            // Edit Button Overlay
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gray)
+                                )
+                                .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                                .offset(x: 4, y: 4)
+                        }
                     }
-                    .offset(x: 4, y: 4)
+                    .buttonStyle(.plain)
+                } else {
+                    profileImageView
                 }
                 
                 // Account Badge
@@ -246,6 +234,29 @@ struct EditProfileView: View {
         }
         .frame(height: 280)
         .ignoresSafeArea(edges: .top)
+    }
+    
+    // MARK: - Profile Image View
+    @ViewBuilder
+    private var profileImageView: some View {
+        if let photoData = profilePhotoData,
+           let uiImage = UIImage(data: photoData) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 100, height: 100)
+                .clipShape(Circle())
+        } else {
+            Circle()
+                .fill(Color.white.opacity(0.3))
+                .frame(width: 100, height: 100)
+                .overlay(
+                    Text(initials)
+                        .font(.Title1)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                )
+        }
     }
     
     // MARK: - Profile Form Section
@@ -267,9 +278,16 @@ struct EditProfileView: View {
             VStack(spacing: 0) {
                 // Name Field
                 HStack {
-                    TextField("Enter your name", text: $name)
-                        .font(.Body)
-                        .foregroundColor(.primary)
+                    if isEditing {
+                        TextField("Enter your name", text: $name)
+                            .font(.Body)
+                            .foregroundColor(.primary)
+                    } else {
+                        Text(name.isEmpty ? "John Doe" : name)
+                            .font(.Body)
+                            .foregroundColor(.primary)
+                        Spacer()
+                    }
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.vertical, AppSpacing.md)
@@ -280,12 +298,19 @@ struct EditProfileView: View {
                 
                 // Email Field
                 HStack {
-                    TextField("Enter your email", text: $email)
-                        .font(.Body)
-                        .foregroundColor(.primary)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    if isEditing {
+                        TextField("Enter your email", text: $email)
+                            .font(.Body)
+                            .foregroundColor(.primary)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    } else {
+                        Text(email.isEmpty ? "john.doe@gmail.com" : email)
+                            .font(.Body)
+                            .foregroundColor(.primary)
+                        Spacer()
+                    }
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.vertical, AppSpacing.md)
@@ -320,15 +345,20 @@ struct EditProfileView: View {
         isValidEmail(email)
     }
     
-    // MARK: - Validation
+    // MARK: - Actions
     
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
+    private func startEditing() {
+        isEditing = true
     }
     
-    // MARK: - Actions
+    private func cancelEditing() {
+        // Revert to original values
+        name = currentName
+        email = currentEmail
+        phone = currentPhone ?? ""
+        profilePhotoData = currentPhotoData
+        isEditing = false
+    }
     
     private func saveProfile() {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
@@ -345,33 +375,79 @@ struct EditProfileView: View {
         
         let phoneToSave = phone.isEmpty ? nil : phone
         onSave(name.trimmingCharacters(in: .whitespaces), email, phoneToSave, profilePhotoData)
-        dismiss()
+        isEditing = false
     }
     
-    // MARK: - Emoji Image Generator
-    
-    private func createEmojiImage(emoji: String) -> UIImage? {
-        let size = CGSize(width: 200, height: 200)
-        let renderer = UIGraphicsImageRenderer(size: size)
+    /// Handles the pending action after photo options sheet is dismissed
+    private func handlePhotoOptionsDismissed() {
+        guard let action = pendingAction else { return }
+        pendingAction = nil
         
-        return renderer.image { context in
-            // Draw background circle
-            let rect = CGRect(origin: .zero, size: size)
-            UIColor.systemGray5.setFill()
-            UIBezierPath(ovalIn: rect).fill()
-            
-            // Draw emoji
-            let font = UIFont.systemFont(ofSize: 100)
-            let attributes: [NSAttributedString.Key: Any] = [.font: font]
-            let emojiSize = emoji.size(withAttributes: attributes)
-            let emojiRect = CGRect(
-                x: (size.width - emojiSize.width) / 2,
-                y: (size.height - emojiSize.height) / 2,
-                width: emojiSize.width,
-                height: emojiSize.height
-            )
-            emoji.draw(in: emojiRect, withAttributes: attributes)
+        // Small delay to ensure sheet dismissal animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            switch action {
+            case .camera:
+                showCamera = true
+            case .library:
+                showPhotoPicker = true
+            case .emoji:
+                showEmojiPicker = true
+            }
         }
+    }
+    
+    /// Loads photo data from PhotosPickerItem
+    @MainActor
+    private func loadPhoto(from item: PhotosPickerItem?) async {
+        guard let item = item else { return }
+        
+        do {
+            if let data = try await item.loadTransferable(type: Data.self) {
+                // Compress the image
+                if let image = UIImage(data: data),
+                   let compressedData = image.jpegData(compressionQuality: 0.6) {
+                    profilePhotoData = compressedData
+                } else {
+                    profilePhotoData = data
+                }
+            }
+        } catch {
+            validationMessage = "Failed to load image. Please try again."
+            showValidationError = true
+        }
+        
+        // Reset selection for next pick
+        selectedPhotoItem = nil
+    }
+    
+    /// Creates image data from emoji using ImageRenderer (SwiftUI)
+    @MainActor
+    private func createEmojiImageData(emoji: String) -> Data? {
+        let emojiView = ZStack {
+            Circle()
+                .fill(Color(.systemGray5))
+                .frame(width: 200, height: 200)
+            
+            Text(emoji)
+                .font(.system(size: 100))
+        }
+        .frame(width: 200, height: 200)
+        
+        let renderer = ImageRenderer(content: emojiView)
+        renderer.scale = 2.0
+        
+        if let uiImage = renderer.uiImage {
+            return uiImage.pngData()
+        }
+        return nil
+    }
+    
+    // MARK: - Validation
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
     }
 }
 
@@ -407,8 +483,9 @@ private struct PhotoOptionsSheet: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .symbolRenderingMode(.hierarchical)
                         .foregroundColor(.secondary)
                 }
             }
@@ -442,7 +519,7 @@ private struct PhotoOptionsSheet: View {
                 // Emoji & Sticker
                 PhotoOptionRow(
                     title: "Emoji & Sticker",
-                    icon: "square.on.square",
+                    icon: "face.smiling",
                     action: onEmojiSticker
                 )
             }
@@ -481,52 +558,6 @@ private struct PhotoOptionRow: View {
             }
             .padding(.horizontal, AppSpacing.lg)
             .padding(.vertical, AppSpacing.md)
-        }
-    }
-}
-
-// MARK: - Camera Picker View (UIKit Wrapper)
-
-struct CameraPickerView: UIViewControllerRepresentable {
-    let onImageCaptured: (UIImage?) -> Void
-    
-    @Environment(\.dismiss) private var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.cameraDevice = .front
-        picker.delegate = context.coordinator
-        picker.allowsEditing = true
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraPickerView
-        
-        init(_ parent: CameraPickerView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
-        ) {
-            // Prefer edited image (cropped), fallback to original
-            let image = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage
-            parent.onImageCaptured(image)
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.onImageCaptured(nil)
-            parent.dismiss()
         }
     }
 }

@@ -4,21 +4,17 @@
 //
 //  Created by Rifqi Rahman on 15/01/26.
 //
-//  Profile header component showing user photo, name, email, account badge, and edit button.
+//  Profile header component showing user photo, name, email, and account badge.
+//  Edit functionality moved to navigation bar in ProfileView.
 //
 
 import SwiftUI
-import PhotosUI
 
 struct ProfileHeaderView: View {
     let profilePhotoData: Data?
     let fullName: String
     let email: String
     let accountBadge: String
-    let onEditTapped: () -> Void
-    let onPhotoChanged: (Data) -> Void
-
-    @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -37,32 +33,12 @@ struct ProfileHeaderView: View {
             }
             .frame(width: 80, height: 80)
             .clipShape(Circle())
-            .overlay(
-                PhotosPicker(
-                    selection: $selectedItem,
-                    matching: .images
-                ) {
-                    EmptyView()
-                }
-                .opacity(0)
-                .frame(width: 64, height: 64)
-            )
-            .onChange(of: selectedItem) {
-                Task {
-                    if let data = try? await selectedItem?.loadTransferable(type: Data.self) {
-                        onPhotoChanged(data)
-                    }
-                }
-            }
 
-            // MARK: - Name and Email
+            // MARK: - Name, Email, and Badge
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                HStack(spacing: AppSpacing.xs) {
-                    Text(fullName.isEmpty ? "John Doe" : fullName)
-                        .font(.Headline)
-                        .fontWeight(.semibold)
-
-                }
+                Text(fullName.isEmpty ? "John Doe" : fullName)
+                    .font(.Headline)
+                    .fontWeight(.semibold)
 
                 Text(email.isEmpty ? "john.doe@gmail.com" : email)
                     .font(.Subheadline)
@@ -77,32 +53,13 @@ struct ProfileHeaderView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
-//                        Capsule()
-//                            .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
                     )
             }
 
             Spacer()
-
-            // MARK: - Edit Button
-            VStack(alignment: .trailing){
-                Button {
-                    onEditTapped()
-                } label: {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                
-
-            }
         }
-        .padding(.horizontal, AppSpacing.xxxs)
-        .padding(.vertical, AppSpacing.lg)
-        .background(Color(.systemBackground))
-        .frame(height: 100)
+        .padding(.vertical, AppSpacing.md)
     }
-    
 }
 
 #Preview {
@@ -110,15 +67,8 @@ struct ProfileHeaderView: View {
         profilePhotoData: nil,
         fullName: "John Doe",
         email: "john.doe@gmail.com",
-        accountBadge: "Free Account",
-        onEditTapped: {
-            print("Edit tapped")
-        },
-        onPhotoChanged: { data in
-            print("Photo changed")
-        }
+        accountBadge: "Free Account"
     )
     .padding()
     .background(Color(.systemGroupedBackground))
 }
-
