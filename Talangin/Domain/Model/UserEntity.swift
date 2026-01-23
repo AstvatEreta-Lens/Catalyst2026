@@ -31,14 +31,12 @@
 import SwiftData
 import Foundation
 
+
 @Model
 final class UserEntity {
 
     // MARK: - Identity
-    
-    /// Unique identifier from Sign in with Apple
-    @Attribute(.unique)
-    var appleUserId: String
+    var appleUserId: String?
 
     // MARK: - Profile Info
     
@@ -65,19 +63,16 @@ final class UserEntity {
     // MARK: - Relationships
     
     /// User's payment methods for receiving transfers
-    @Relationship(deleteRule: .cascade)
-    var paymentMethods: [PaymentMethodEntity] = []
+    @Relationship(deleteRule: .cascade, inverse: \PaymentMethodEntity.user)
+    var paymentMethods: [PaymentMethodEntity]? = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \SplitParticipantEntity.user)
+    var splitParticipants: [SplitParticipantEntity]? = []
 
     // MARK: - Metadata
-    
-    /// When the user account was created
-    var createdAt: Date
-    
-    /// When the user profile was last updated
-    var updatedAt: Date
+    var createdAt: Date?
+    var updatedAt: Date?
 
-    // MARK: - Init
-    
     init(
         appleUserId: String,
         fullName: String? = nil,

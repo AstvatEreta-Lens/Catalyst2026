@@ -14,19 +14,46 @@ import SwiftData
 @main
 struct TalanginApp: App {
     @StateObject private var authState = AppAuthState()
-
+    
+    init() {
+        print("📁 Database Path: \(URL.applicationSupportDirectory.path(percentEncoded: false))")
+    }
+    
     var body: some Scene {
         WindowGroup {
             AuthGateView()
                 .environmentObject(authState)
+                .onAppear {
+                    // Alternative way to find DB path in logs
+                    if let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                        print("📁 App Support Directory: \(url.path)")
+                    }
+              
+                }
         }
-        .modelContainer(for: [
-            Item.self,
+        .modelContainer(sharedModelContainer)
+
+    }
+    private let sharedModelContainer: ModelContainer = {
+        let schema = Schema([
             UserEntity.self,
             PaymentMethodEntity.self,
-            ContactEntity.self,
-            ContactPaymentMethod.self,
-            GroupEntity.self
+            ExpenseEntity.self,
+            GroupEntity.self,
+            FriendEntity.self,
+            SplitParticipantEntity.self,
+            ExpenseItemEntity.self
         ])
-    }
+        
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false
+        )
+        
+        do {
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            fatalError("Could not configure SwiftData container: \(error)")
+        }
+    }()
 }

@@ -9,7 +9,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct EditPaymentMethodView: View {
     @Bindable var method: PaymentMethodEntity

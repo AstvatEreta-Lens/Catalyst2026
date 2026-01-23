@@ -19,27 +19,35 @@ final class UserRepository: UserRepositoryProtocol {
        // MARK: - Current User (ACTIVE SESSION)
 
        func getCurrentUser() throws -> UserEntity? {
+           print("🔍 UserRepository: Fetching current user...")
            guard let appleUserId = KeychainService.load(for: "appleUserID") else {
+               print("⚠️ UserRepository: No appleUserID found in Keychain")
                return nil
            }
+           print("🔑 UserRepository: Found appleUserID: \(appleUserId)")
 
-           let predicate = #Predicate<UserEntity> {
-               $0.appleUserId == appleUserId
+           let predicate = #Predicate<UserEntity> { user in
+               user.appleUserId == appleUserId
            }
 
            let descriptor = FetchDescriptor(predicate: predicate)
-           return try context.fetch(descriptor).first
+           let results = try context.fetch(descriptor)
+           print("📊 UserRepository: Found \(results.count) users matching ID")
+           return results.first
        }
 
        // MARK: - Fetch by ID
 
        func getUser(by appleUserId: String) throws -> UserEntity? {
-           let predicate = #Predicate<UserEntity> {
-               $0.appleUserId == appleUserId
+           print("🔍 UserRepository: Fetching user by ID: \(appleUserId)")
+           let predicate = #Predicate<UserEntity> { user in
+               user.appleUserId == appleUserId
            }
 
            let descriptor = FetchDescriptor(predicate: predicate)
-           return try context.fetch(descriptor).first
+           let results = try context.fetch(descriptor)
+           print("📊 UserRepository: Found \(results.count) users matching ID")
+           return results.first
        }
 
        // MARK: - Upsert
