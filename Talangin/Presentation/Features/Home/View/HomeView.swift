@@ -53,7 +53,7 @@ struct HomeView: View {
                         VStack(spacing: 16) {
                             ForEach(groups) { group in
                                 NavigationLink {
-                                    GroupDetailView(
+                                    GroupPageView(
                                         group: group,
                                         currentUserID: currentUserID
                                     )

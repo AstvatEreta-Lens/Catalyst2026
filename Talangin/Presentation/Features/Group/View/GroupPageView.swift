@@ -1,5 +1,5 @@
 //
-//  GroupDetailView.swift
+//  GroupPageView.swift
 //  Talangin
 //
 //  Created by Ahmad Al Wabil on 16/01/26.
@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct GroupDetailView: View {
+struct GroupPageView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     let group: GroupEntity
