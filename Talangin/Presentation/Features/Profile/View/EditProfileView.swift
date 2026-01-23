@@ -5,7 +5,7 @@
 //  Created by Rifqi Rahman on 19/01/26.
 //
 //  Edit profile view with gradient header and profile photo editing.
-//  Matches the design with "< Profile" back button and "Save" action.
+//  Supports camera capture, photo library selection, and emoji stickers.
 //
 //  BACKEND DEVELOPER NOTES:
 //  -------------------------
@@ -46,9 +46,11 @@ struct EditProfileView: View {
     @State private var showPhotoOptions = false
     @State private var showImagePicker = false
     @State private var showCamera = false
+    @State private var showEmojiPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showValidationError = false
     @State private var validationMessage = ""
+    @State private var showCameraUnavailableAlert = false
     
     var body: some View {
         NavigationStack {
@@ -94,15 +96,26 @@ struct EditProfileView: View {
                 PhotoOptionsSheet(
                     onTakePhoto: {
                         showPhotoOptions = false
-                        showCamera = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            // Check if camera is available
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                                showCamera = true
+                            } else {
+                                showCameraUnavailableAlert = true
+                            }
+                        }
                     },
                     onChoosePhoto: {
                         showPhotoOptions = false
-                        showImagePicker = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showImagePicker = true
+                        }
                     },
                     onEmojiSticker: {
-                        // BACKEND NOTE: Implement emoji/sticker picker
                         showPhotoOptions = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showEmojiPicker = true
+                        }
                     }
                 )
                 .presentationDetents([.height(280)])
@@ -113,6 +126,26 @@ struct EditProfileView: View {
                 selection: $selectedPhotoItem,
                 matching: .images
             )
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPickerView { image in
+                    if let image = image,
+                       let data = image.jpegData(compressionQuality: 0.6) {
+                        profilePhotoData = data
+                    }
+                }
+                .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showEmojiPicker) {
+                EmojiStickerPicker { emoji in
+                    // Create an image from the emoji
+                    if let emojiImage = createEmojiImage(emoji: emoji),
+                       let data = emojiImage.pngData() {
+                        profilePhotoData = data
+                    }
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task {
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -124,6 +157,11 @@ struct EditProfileView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(validationMessage)
+            }
+            .alert("Camera Unavailable", isPresented: $showCameraUnavailableAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Camera is not available on this device. Please use the simulator with a physical device or choose a photo from your library.")
             }
             .onAppear {
                 name = currentName
@@ -183,7 +221,7 @@ struct EditProfileView: View {
                             .fill(Color.white)
                             .frame(width: 32, height: 32)
                             .overlay(
-                                Image(systemName: "camera.fill")
+                                Image(systemName: "pencil")
                                     .font(.system(size: 14))
                                     .foregroundColor(.gray)
                             )
@@ -309,6 +347,32 @@ struct EditProfileView: View {
         onSave(name.trimmingCharacters(in: .whitespaces), email, phoneToSave, profilePhotoData)
         dismiss()
     }
+    
+    // MARK: - Emoji Image Generator
+    
+    private func createEmojiImage(emoji: String) -> UIImage? {
+        let size = CGSize(width: 200, height: 200)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        
+        return renderer.image { context in
+            // Draw background circle
+            let rect = CGRect(origin: .zero, size: size)
+            UIColor.systemGray5.setFill()
+            UIBezierPath(ovalIn: rect).fill()
+            
+            // Draw emoji
+            let font = UIFont.systemFont(ofSize: 100)
+            let attributes: [NSAttributedString.Key: Any] = [.font: font]
+            let emojiSize = emoji.size(withAttributes: attributes)
+            let emojiRect = CGRect(
+                x: (size.width - emojiSize.width) / 2,
+                y: (size.height - emojiSize.height) / 2,
+                width: emojiSize.width,
+                height: emojiSize.height
+            )
+            emoji.draw(in: emojiRect, withAttributes: attributes)
+        }
+    }
 }
 
 // MARK: - Photo Options Sheet
@@ -421,9 +485,162 @@ private struct PhotoOptionRow: View {
     }
 }
 
+// MARK: - Camera Picker View (UIKit Wrapper)
+
+struct CameraPickerView: UIViewControllerRepresentable {
+    let onImageCaptured: (UIImage?) -> Void
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.cameraDevice = .front
+        picker.delegate = context.coordinator
+        picker.allowsEditing = true
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPickerView
+        
+        init(_ parent: CameraPickerView) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            // Prefer edited image (cropped), fallback to original
+            let image = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage
+            parent.onImageCaptured(image)
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.onImageCaptured(nil)
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Emoji Sticker Picker
+
+private struct EmojiStickerPicker: View {
+    let onEmojiSelected: (String) -> Void
+    
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedCategory: EmojiCategory = .smileys
+    
+    // Common profile-friendly emojis
+    private let emojiCategories: [EmojiCategory: [String]] = [
+        .smileys: ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "😊", "😇", "🥰", "😍", "🤩", "😘", "😋", "😎", "🤓", "🧐", "🤠", "🥳", "🤗", "🤭", "😏", "😌", "😴", "🤤", "😷", "🤒", "🤕"],
+        .people: ["👶", "👧", "🧒", "👦", "👩", "🧑", "👨", "👩‍🦱", "🧑‍🦱", "👨‍🦱", "👩‍🦰", "🧑‍🦰", "👨‍🦰", "👱‍♀️", "👱", "👱‍♂️", "👩‍🦳", "🧑‍🦳", "👨‍🦳", "👩‍🦲", "🧑‍🦲", "👨‍🦲", "🧔", "👵", "🧓", "👴", "👲", "👳‍♀️", "👳", "🧕"],
+        .animals: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐻‍❄️", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🐤", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🦋"],
+        .nature: ["🌸", "💮", "🏵️", "🌹", "🥀", "🌺", "🌻", "🌼", "🌷", "🌱", "🪴", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀", "🍁", "🍂", "🍃", "🪺", "🪹", "🍄", "🌰", "🦀", "🦞", "🦐", "🦑"],
+        .food: ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑", "🌽", "🥕", "🧄", "🧅", "🥔", "🍠"],
+        .objects: ["⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑", "🥍", "🏏", "🪃", "🥅", "⛳", "🪁", "🎣", "🤿", "🎽", "🎿", "🛷", "🥌", "🎯", "🪀", "🎮"]
+    ]
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Category Picker
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: AppSpacing.md) {
+                        ForEach(EmojiCategory.allCases, id: \.self) { category in
+                            Button {
+                                selectedCategory = category
+                            } label: {
+                                Text(category.icon)
+                                    .font(.title2)
+                                    .padding(.horizontal, AppSpacing.sm)
+                                    .padding(.vertical, AppSpacing.xs)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(selectedCategory == category ? AppColors.primary.opacity(0.2) : Color.clear)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                }
+                .padding(.vertical, AppSpacing.md)
+                
+                Divider()
+                
+                // Emoji Grid
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: AppSpacing.md) {
+                        ForEach(emojiCategories[selectedCategory] ?? [], id: \.self) { emoji in
+                            Button {
+                                onEmojiSelected(emoji)
+                                dismiss()
+                            } label: {
+                                Text(emoji)
+                                    .font(.system(size: 36))
+                            }
+                        }
+                    }
+                    .padding(AppSpacing.lg)
+                }
+            }
+            .navigationTitle("Choose Emoji")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Emoji Category
+
+private enum EmojiCategory: CaseIterable {
+    case smileys
+    case people
+    case animals
+    case nature
+    case food
+    case objects
+    
+    var icon: String {
+        switch self {
+        case .smileys: return "😀"
+        case .people: return "👤"
+        case .animals: return "🐶"
+        case .nature: return "🌸"
+        case .food: return "🍎"
+        case .objects: return "⚽"
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .smileys: return "Smileys"
+        case .people: return "People"
+        case .animals: return "Animals"
+        case .nature: return "Nature"
+        case .food: return "Food"
+        case .objects: return "Objects"
+        }
+    }
+}
+
 #Preview {
     EditProfileView(
-        currentName: "Rifqi Smith",
+        currentName: "John Smith",
         currentEmail: "john.doe@gmail.com",
         currentPhone: nil,
         currentPhotoData: nil,
