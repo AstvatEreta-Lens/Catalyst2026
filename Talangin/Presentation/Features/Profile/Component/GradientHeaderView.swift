@@ -92,8 +92,8 @@ extension GradientHeaderView {
     init(contact: ContactEntity) {
         self.photoData = contact.profilePhotoData
         self.initials = contact.initials
-        self.name = contact.fullName
-        self.subtitle = contact.email
+        self.name = contact.fullName ?? "Unknown"
+        self.subtitle = contact.email ?? ""
     }
 }
 

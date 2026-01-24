@@ -42,7 +42,9 @@ struct TalanginApp: App {
             GroupEntity.self,
             FriendEntity.self,
             SplitParticipantEntity.self,
-            ExpenseItemEntity.self
+            ExpenseItemEntity.self,
+            ContactEntity.self,
+            ContactPaymentMethod.self
         ])
         
         let config = ModelConfiguration(
@@ -53,6 +55,16 @@ struct TalanginApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
+            // Print detailed error information
+            print("❌ SwiftData Error Details:")
+            print("Error: \(error)")
+            print("Error localized: \(error.localizedDescription)")
+            
+            if let swiftDataError = error as? any LocalizedError {
+                print("Failure reason: \(swiftDataError.failureReason ?? "Unknown")")
+                print("Recovery suggestion: \(swiftDataError.recoverySuggestion ?? "None")")
+            }
+            
             fatalError("Could not configure SwiftData container: \(error)")
         }
     }()

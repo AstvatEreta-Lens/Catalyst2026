@@ -137,7 +137,6 @@ struct AddFriendView: View {
             
             Text("Find Friends")
                 .font(.Title3)
-                .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
             Text("Search for friends by their email address or phone number to add them to your contacts.")
@@ -161,7 +160,6 @@ struct AddFriendView: View {
             
             Text("No Results Found")
                 .font(.Title3)
-                .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
             Text("We couldn't find anyone with \"\(searchText)\". Make sure they have a Talangin account.")

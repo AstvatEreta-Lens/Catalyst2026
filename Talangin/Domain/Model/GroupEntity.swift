@@ -43,78 +43,68 @@ import SwiftUI
 final class GroupEntity {
     
     // MARK: - Identity
-    @Attribute(.unique)
-    var id: UUID
+    var id: UUID?
     
     // MARK: - Group Info
-    var name: String
+    var name: String?
+    var groupDescription: String?
     
     /// SF Symbol name for group icon
-    /// BACKEND NOTE: Could be extended to support custom image URLs
-    var iconName: String
+    var iconName: String?
     
-    /// Hex color string for icon background (e.g., "#E8F5E9")
-    var iconBackgroundColorHex: String
+    /// Hex color string for icon background
+    var iconBackgroundColorHex: String?
     
-    // MARK: - Photo (Optional custom group image)
-    /// Custom group photo data
-    /// BACKEND NOTE: Consider storing as URL for server images
+    // MARK: - Photo
     var groupPhotoData: Data?
     
-    // MARK: - Members
-    /// Array of member user IDs
-    /// BACKEND NOTE: Fetch full member details from server when needed
-    var memberIds: [String] = []
+    // MARK: - Relationships
+    @Relationship(deleteRule: .nullify, inverse: \FriendEntity.groups)
+    var members: [FriendEntity]? = []
     
-    /// Creator user ID
-    var createdBy: String
+    @Relationship(deleteRule: .cascade, inverse: \ExpenseEntity.group)
+    var expenses: [ExpenseEntity]? = []
     
     // MARK: - Metadata
-    var createdAt: Date
-    var updatedAt: Date
+    var createdAt: Date?
+    var updatedAt: Date?
     
     // MARK: - Computed Properties
-    
-    /// Returns the number of members in the group
     var memberCount: Int {
-        memberIds.count
+        members?.count ?? 0
     }
     
-    /// Checks if group has a custom photo
-    var hasCustomPhoto: Bool {
-        groupPhotoData != nil
+    var avatarInitials: String {
+        let components = (name ?? "Untitled").components(separatedBy: " ")
+        let initials = components.compactMap { $0.first }.prefix(2)
+        return String(initials).uppercased()
     }
     
-    /// Converts hex color string to SwiftUI Color
     var iconBackgroundColor: Color {
-        Color(hex: iconBackgroundColorHex) ?? Color.gray.opacity(0.2)
+        Color(hex: iconBackgroundColorHex ?? "#E8F5E9") ?? Color.gray.opacity(0.2)
     }
     
     // MARK: - Initializer
     init(
         id: UUID = UUID(),
         name: String,
+        groupDescription: String? = nil,
         iconName: String = "person.3.fill",
         iconBackgroundColorHex: String = "#E8F5E9",
-        groupPhotoData: Data? = nil,
-        memberIds: [String] = [],
-        createdBy: String
+        members: [FriendEntity] = []
     ) {
         self.id = id
         self.name = name
+        self.groupDescription = groupDescription
         self.iconName = iconName
         self.iconBackgroundColorHex = iconBackgroundColorHex
-        self.groupPhotoData = groupPhotoData
-        self.memberIds = memberIds
-        self.createdBy = createdBy
+        self.members = members
         self.createdAt = .now
         self.updatedAt = .now
     }
 }
 
 // MARK: - Color Extension for Hex Support
-/// Helper extension to create Color from hex string
-
 extension Color {
     init?(hex: String) {
         var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -132,51 +122,28 @@ extension Color {
         self.init(red: r, green: g, blue: b)
     }
 }
-
 // MARK: - Mock Data for Development
-/// BACKEND NOTE: Remove this extension before production release.
-/// This provides sample data for UI development and testing.
-
 extension GroupEntity {
-    
     static var mockGroups: [GroupEntity] {
         [
             GroupEntity(
-                name: "Arisan Ibu Gang 2",
-                iconName: "hand.raised.fingers.spread.fill",
-                iconBackgroundColorHex: "#FFF3E0",
-                createdBy: "user1"
-            ),
-            GroupEntity(
-                name: "Merbabu - Talangin",
-                iconName: "mountain.2.fill",
-                iconBackgroundColorHex: "#E8F5E9",
-                createdBy: "user1"
-            ),
-            GroupEntity(
-                name: "My Family",
-                iconName: "figure.2.and.child.holdinghands",
-                iconBackgroundColorHex: "#E3F2FD",
-                createdBy: "user1"
-            ),
-            GroupEntity(
                 name: "Trip To Bromo",
-                iconName: "car.fill",
-                iconBackgroundColorHex: "#FCE4EC",
-                createdBy: "user1"
+                groupDescription: "Patungan biaya bromo",
+                iconName: "mountain.2.fill",
+                iconBackgroundColorHex: "#E8F5E9"
+            ),
+            GroupEntity(
+                name: "Dinner Team",
+                groupDescription: "Makan malam mingguan",
+                iconName: "fork.knife",
+                iconBackgroundColorHex: "#FFF3E0"
+            ),
+            GroupEntity(
+                name: "Kos-kosan",
+                groupDescription: "Bayar listrik dan air",
+                iconName: "house.fill",
+                iconBackgroundColorHex: "#E3F2FD"
             )
         ]
-    }
-    
-    /// Creates a mock group with members for preview/testing
-    static func mockGroupWithMembers() -> GroupEntity {
-        let group = GroupEntity(
-            name: "Trip To Bromo",
-            iconName: "car.fill",
-            iconBackgroundColorHex: "#FCE4EC",
-            memberIds: ["user1", "user2", "user3", "user4"],
-            createdBy: "user1"
-        )
-        return group
     }
 }

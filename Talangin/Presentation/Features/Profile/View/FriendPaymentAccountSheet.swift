@@ -33,11 +33,11 @@ struct FriendPaymentAccountSheet: View {
     // MARK: - Computed Properties
     
     private var primaryMethod: ContactPaymentMethod? {
-        paymentMethods.first { $0.isPrimary }
+        paymentMethods.first { $0.isPrimary ?? false }
     }
     
     private var otherMethods: [ContactPaymentMethod] {
-        paymentMethods.filter { !$0.isPrimary }
+        paymentMethods.filter { $0.isPrimary ?? false}
     }
     
     private var filteredPrimaryMethod: ContactPaymentMethod? {
@@ -190,9 +190,9 @@ struct FriendPaymentAccountSheet: View {
     // MARK: - Helper Methods
     
     private func matchesSearch(_ method: ContactPaymentMethod) -> Bool {
-        method.providerName.localizedCaseInsensitiveContains(searchText) ||
-        method.destination.localizedCaseInsensitiveContains(searchText) ||
-        method.holderName.localizedCaseInsensitiveContains(searchText)
+        (method.providerName ?? "").localizedCaseInsensitiveContains(searchText) ||
+        (method.destination ?? "").localizedCaseInsensitiveContains(searchText) ||
+        (method.holderName ?? "").localizedCaseInsensitiveContains(searchText)
     }
     
     private func copyToClipboard(_ text: String) {
@@ -259,7 +259,7 @@ private struct PaymentMethodCard: View {
         VStack(spacing: 0) {
             // Provider Name Row
             HStack {
-                Text(method.providerName)
+                Text(method.providerName ?? "Unknown")
                     .font(.Body)
                     .foregroundColor(.primary)
                 Spacer()
@@ -268,7 +268,7 @@ private struct PaymentMethodCard: View {
             .padding(.vertical, AppSpacing.md)
             .contentShape(Rectangle())
             .onTapGesture {
-                onCopy(method.providerName)
+                onCopy(method.providerName ?? "")
             }
             
             Divider()
@@ -276,13 +276,13 @@ private struct PaymentMethodCard: View {
             
             // Account Number Row (Copyable)
             HStack {
-                Text(method.destination)
+                Text(method.destination ?? "-")
                     .font(.Body)
                     .foregroundColor(.primary)
                 Spacer()
                 
                 Button {
-                    onCopy(method.destination)
+                    onCopy(method.destination ?? "")
                 } label: {
                     Image(systemName: "doc.on.doc")
                         .font(.system(size: 14))
@@ -293,7 +293,7 @@ private struct PaymentMethodCard: View {
             .padding(.vertical, AppSpacing.md)
             .contentShape(Rectangle())
             .onTapGesture {
-                onCopy(method.destination)
+                onCopy(method.destination ?? "")
             }
             
             Divider()
@@ -301,7 +301,7 @@ private struct PaymentMethodCard: View {
             
             // Holder Name Row
             HStack {
-                Text(method.holderName)
+                Text(method.holderName ?? "-")
                     .font(.Body)
                     .foregroundColor(.primary)
                 Spacer()
@@ -310,7 +310,7 @@ private struct PaymentMethodCard: View {
             .padding(.vertical, AppSpacing.md)
             .contentShape(Rectangle())
             .onTapGesture {
-                onCopy(method.holderName)
+                onCopy(method.holderName ?? "")
             }
         }
     }

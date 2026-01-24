@@ -90,7 +90,7 @@ extension GroupIconView {
     /// Creates icon from GroupEntity
     /// BACKEND NOTE: Update this when GroupEntity is fully integrated
     init(group: GroupEntity, size: Size = .small) {
-        self.iconName = group.iconName
+        self.iconName = group.iconName ?? "person.fill"
         self.photoData = group.groupPhotoData
         self.backgroundColor = group.iconBackgroundColor
         self.size = size

@@ -33,13 +33,13 @@ struct FriendDetailView: View {
             ContactPaymentMethod(
                 providerName: "BCA",
                 destination: "120-12038-00500",
-                holderName: contact.fullName,
+                holderName: contact.fullName ?? "Unknown",
                 isPrimary: true
             ),
             ContactPaymentMethod(
                 providerName: "GoPay",
                 destination: "081234568887",
-                holderName: contact.fullName,
+                holderName: contact.fullName ?? "Unknown",
                 isPrimary: false
             )
         ]
@@ -47,7 +47,7 @@ struct FriendDetailView: View {
     
     /// Default payment method to display
     private var primaryPayment: ContactPaymentMethod? {
-        mockPaymentMethods.first { $0.isPrimary } ?? mockPaymentMethods.first
+        mockPaymentMethods.first { $0.isPrimary ?? false } ?? mockPaymentMethods.first
     }
     
     var body: some View {
@@ -57,8 +57,8 @@ struct FriendDetailView: View {
                 GradientHeaderView(
                     photoData: contact.profilePhotoData,
                     initials: contact.initials,
-                    name: contact.fullName,
-                    subtitle: contact.email
+                    name: contact.fullName ?? "Unknown",
+                    subtitle: contact.email ?? ""
                 )
                 
                 // MARK: - Content
@@ -84,7 +84,7 @@ struct FriendDetailView: View {
         }
         .sheet(isPresented: $showPaymentSheet) {
             FriendPaymentAccountSheet(
-                contactName: contact.fullName,
+                contactName: contact.fullName ?? "Unknown",
                 paymentMethods: mockPaymentMethods
             )
         }
@@ -156,7 +156,7 @@ private struct SharedGroupRow: View {
             GroupIconView(group: group, size: .small)
             
             // Group Name
-            Text(group.name)
+            Text(group.name ?? "untitled Group")
                 .font(.Body)
                 .foregroundColor(.primary)
             
@@ -171,12 +171,12 @@ private struct SharedGroupRow: View {
         .padding(.vertical, AppSpacing.md)
     }
 }
-
-#Preview {
-    NavigationStack {
-        FriendDetailView(
-            contact: ContactEntity.mockContactWithPayments(),
-            sharedGroups: Array(GroupEntity.mockGroups.prefix(2))
-        )
-    }
-}
+//
+//#Preview {
+//    NavigationStack {
+//        FriendDetailView(
+//            contact: ContactEntity.mockContactWithPayments(),
+//            sharedGroups: Array(GroupEntity.mockGroups.prefix(2))
+//        )
+//    }
+//}

@@ -91,7 +91,7 @@ struct AddNewExpenseView: View {
                 // Title Field
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("", text: $viewModel.title, prompt: Text("Expense Name").foregroundColor(.white.opacity(0.7)))
-                        .font(.custom(FontTokens.medium, size: 28))
+                        .font(.system(size: FontTokens.Title1.size, weight: FontTokens.medium))
                         .foregroundColor(.white)
                     
                     Rectangle()
@@ -112,15 +112,15 @@ struct AddNewExpenseView: View {
             // Total Amount Section
             VStack(alignment: .leading, spacing: 8) {
                 Text("TOTAL AMOUNT")
-                    .font(.custom(FontTokens.bold, size: 12))
+                    .font(.system(size: FontTokens.Caption1.size, weight: FontTokens.bold))
                     .foregroundColor(.secondary)
                 
                 HStack {
                     Text("Rp")
-                        .font(.custom(FontTokens.bold, size: 24))
+                        .font(.system(size: 24, weight: FontTokens.bold))
                         .foregroundColor(.black)
                     TextField("0", text: $viewModel.totalPrice)
-                        .font(.custom(FontTokens.bold, size: 24))
+                        .font(.system(size: 24, weight: FontTokens.bold))
                         .keyboardType(.decimalPad)
                     
                     
@@ -146,7 +146,7 @@ struct AddNewExpenseView: View {
                 Button(action: { viewModel.showPaidBySheet = true }) {
                     HStack{
                         Text("Paid By")
-                            .font(.custom(FontTokens.bold, size: 17))
+                            .font(.Headline)
                             .foregroundColor(.black)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -161,19 +161,19 @@ struct AddNewExpenseView: View {
                         
                         
                         Text(firstPayer.displayName)
-                            .font(.custom(FontTokens.medium, size: 16))
+                            .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                             .foregroundColor(.black)
                         
                         Spacer()
                         if firstPayer.amount > 0 {
                             Text(firstPayer.amount.formatted(.currency(code: "IDR")))
-                                .font(.custom(FontTokens.regular, size: 16))
+                                .font(.Callout)
                                 .foregroundColor(.secondary)
                         }
                         
                     } else {
                         Text("Select Payer")
-                            .font(.custom(FontTokens.regular, size: 16))
+                            .font(.Callout)
                             .foregroundColor(.secondary)
                     }
                     
@@ -189,7 +189,7 @@ struct AddNewExpenseView: View {
     private var splitWithSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Split With")
-                .font(.custom(FontTokens.bold, size: 14))
+                .font(.system(size: FontTokens.Subheadline.size, weight: FontTokens.bold))
                 .foregroundColor(.black)
             
             Button(action: { viewModel.showBeneficiarySheet = true }) {
@@ -231,7 +231,7 @@ struct AddNewExpenseView: View {
     private var splitTypeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Split Type")
-                .font(.custom(FontTokens.bold, size: 14))
+                .font(.system(size: FontTokens.Subheadline.size, weight: FontTokens.bold))
                 .foregroundColor(.black)
             
             VStack(spacing: 0) {
@@ -247,16 +247,16 @@ struct AddNewExpenseView: View {
                                     .foregroundColor(Color(red: 0.56, green: 0.79, blue: 0.19))
                                 
                                 Text("Equal")
-                                    .font(.custom(FontTokens.medium, size: 16))
+                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                                     .foregroundColor(.black)
                             }
                         } else if viewModel.splitResult.method == .none {
                             Text("Choose Split Method")
-                                .font(.custom(FontTokens.regular, size: 16))
+                                .font(.Callout)
                                 .foregroundColor(.secondary)
                         } else {
                             Text(viewModel.splitResult.method.rawValue.capitalized)
-                                .font(.custom(FontTokens.medium, size: 16))
+                                .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                                 .foregroundColor(.black)
                         }
                         
@@ -326,10 +326,10 @@ struct AddNewExpenseView: View {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.name)
-                            .font(.custom(FontTokens.medium, size: 16))
+                            .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                             .foregroundColor(.black)
                         Text(item.price.formatted(.currency(code: "IDR")))
-                            .font(.custom(FontTokens.regular, size: 14))
+                            .font(.system(size: FontTokens.Subheadline.size, weight: FontTokens.regular))
                             .foregroundColor(.secondary)
                     }
                     
@@ -362,13 +362,13 @@ struct AddNewExpenseView: View {
             InitialsAvatar(initials: initials, size: 36)
             
             Text(name)
-                .font(.custom(FontTokens.medium, size: 16))
+                .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                 .foregroundColor(.black)
             
             Spacer()
             
             Text(amount.formatted(.currency(code: "IDR")))
-                .font(.custom(FontTokens.bold, size: 16))
+                .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                 .foregroundColor(.black)
         }
         .padding(.horizontal)

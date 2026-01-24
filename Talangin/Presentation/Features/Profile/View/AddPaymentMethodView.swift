@@ -107,7 +107,7 @@ struct AddPaymentMethodView: View {
     private func save() {
         // If setting as default, unset other defaults first
         if isDefault {
-            for method in user.paymentMethods {
+            for method in user.paymentMethods ?? [] {
                 method.isDefault = false
             }
         }
@@ -133,41 +133,41 @@ struct AddPaymentMethodView: View {
     }
 }
 
-#Preview {
-    @MainActor
-    func makePreview() -> AnyView {
-        do {
-            let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            let container = try ModelContainer(
-                for: Item.self, UserEntity.self, PaymentMethodEntity.self,
-                configurations: config
-            )
-
-            let mockUser = UserEntity(appleUserId: "preview")
-            let context = container.mainContext
-            context.insert(mockUser)
-
-            return AnyView(
-                AddPaymentMethodView(user: mockUser)
-                    .modelContainer(container)
-            )
-        } catch {
-            return AnyView(
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text("Preview Error")
-                        .font(.headline)
-                    Text(error.localizedDescription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            )
-        }
-    }
-
-    return makePreview()
-}
+//#Preview {
+//    @MainActor
+//    func makePreview() -> AnyView {
+//        do {
+//            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+//            let container = try ModelContainer(
+//                for: Item.self, UserEntity.self, PaymentMethodEntity.self,
+//                configurations: config
+//            )
+//
+//            let mockUser = UserEntity(appleUserId: "preview")
+//            let context = container.mainContext
+//            context.insert(mockUser)
+//
+//            return AnyView(
+//                AddPaymentMethodView(user: mockUser)
+//                    .modelContainer(container)
+//            )
+//        } catch {
+//            return AnyView(
+//                VStack {
+//                    Image(systemName: "exclamationmark.triangle")
+//                        .font(.largeTitle)
+//                        .foregroundColor(.orange)
+//                    Text("Preview Error")
+//                        .font(.headline)
+//                    Text(error.localizedDescription)
+//                        .font(.caption)
+//                        .foregroundColor(.secondary)
+//                        .multilineTextAlignment(.center)
+//                        .padding()
+//                }
+//            )
+//        }
+//    }
+//
+//    return makePreview()
+//}

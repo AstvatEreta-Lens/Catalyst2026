@@ -34,7 +34,7 @@ struct PremiumBannerView: View {
                 // MARK: - Text Content
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("Enjoy Our Premium\nFeatures")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: FontTokens.Title3.size, weight: FontTokens.bold))
                         .foregroundColor(titleColor)
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
@@ -43,7 +43,7 @@ struct PremiumBannerView: View {
                         onUpgradeTapped()
                     } label: {
                         Text("Upgrade Now")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 14, weight: FontTokens.semiBold))
                             .foregroundColor(buttonTextColor)
                             .padding(.horizontal, AppSpacing.lg)
                             .padding(.vertical, 12)

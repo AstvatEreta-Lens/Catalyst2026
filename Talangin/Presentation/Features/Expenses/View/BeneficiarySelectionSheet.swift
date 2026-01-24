@@ -63,7 +63,7 @@ struct BeneficiarySelectionSheet: View {
                         VStack(spacing: 8) {
                             ZStack(alignment: .topTrailing) {
                                 Text(beneficiary.initials)
-                                    .font(.custom(FontTokens.medium, size: 16))
+                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                                     .foregroundColor(.blue)
                                     .frame(width: 56, height: 56)
                                     .background(Color(red: 0.9, green: 0.93, blue: 0.98))
@@ -89,7 +89,7 @@ struct BeneficiarySelectionSheet: View {
                             }
                             
                             Text(beneficiary.name)
-                                .font(.custom(FontTokens.regular, size: 12))
+                                .font(.Caption)
                                 .lineLimit(1)
                                 .frame(width: 60)
                         }
@@ -108,7 +108,7 @@ struct BeneficiarySelectionSheet: View {
     private var recentFriendsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Friends")
-                .font(.custom(FontTokens.semiBold, size: 17))
+                .font(.Headline)
                 .padding(.horizontal)
             
             VStack(spacing: 0) {
@@ -127,7 +127,7 @@ struct BeneficiarySelectionSheet: View {
                         }
                         
                         Text("Add New Friend")
-                            .font(.custom(FontTokens.regular, size: 17))
+                            .font(.Body)
                             .foregroundColor(.gray.opacity(0.6))
                         
                         Spacer()
@@ -181,7 +181,7 @@ private extension BeneficiarySelectionSheet {
             }
 
             Text(friend.fullName ?? "Unknown")
-                .font(.custom(FontTokens.regular, size: 17))
+                .font(.Body)
                 .foregroundColor(.black)
             
             Spacer()
@@ -199,7 +199,7 @@ private extension BeneficiarySelectionSheet {
             }
 
             Text(group.name ?? "Unknown")
-                .font(.custom(FontTokens.regular, size: 17))
+                .font(.Body)
                 .foregroundColor(.black)
             
             Spacer()

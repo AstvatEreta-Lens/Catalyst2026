@@ -53,6 +53,7 @@ struct ProfileMenuRow: View {
     private var navigationRow: some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Image(systemName: "chevron.right")
@@ -71,6 +72,7 @@ struct ProfileMenuRow: View {
         } label: {
             HStack {
                 Text(title)
+                    .font(.Body)
                     .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: "arrow.up.right")
@@ -87,6 +89,7 @@ struct ProfileMenuRow: View {
     private func menuRow(selectedValue: Binding<String>, options: [String]) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Menu {
@@ -98,7 +101,8 @@ struct ProfileMenuRow: View {
             } label: {
                 HStack(spacing: AppSpacing.xxs) {
                     Text(selectedValue.wrappedValue)
-                        .foregroundColor(.secondary)
+                    .font(.Body)
+                    .foregroundColor(.secondary)
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
@@ -114,6 +118,7 @@ struct ProfileMenuRow: View {
     private func toggleRow(isOn: Binding<Bool>) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Toggle("", isOn: isOn)
@@ -128,9 +133,11 @@ struct ProfileMenuRow: View {
     private func textOnlyRow(value: String) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Text(value)
+                .font(.Body)
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, AppSpacing.lg)

@@ -65,7 +65,7 @@ struct PaidBySelectionSheet: View {
                         VStack(spacing: 8) {
                             ZStack(alignment: .topTrailing) {
                                 Text(payer.initials)
-                                    .font(.custom(FontTokens.medium, size: 16))
+                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                                     .foregroundColor(.blue)
                                     .frame(width: 56, height: 56)
                                     .background(Color(red: 0.9, green: 0.93, blue: 0.98))
@@ -83,7 +83,7 @@ struct PaidBySelectionSheet: View {
                             }
                             
                             Text(payer.displayName)
-                                .font(.custom(FontTokens.regular, size: 12))
+                                .font(.Caption)
                                 .lineLimit(1)
                                 .frame(width: 60)
                         }
@@ -102,7 +102,7 @@ struct PaidBySelectionSheet: View {
     private var recentFriendsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Friends")
-                .font(.custom(FontTokens.semiBold, size: 17))
+                .font(.Headline)
                 .padding(.horizontal)
             
             VStack(spacing: 0) {
@@ -121,7 +121,7 @@ struct PaidBySelectionSheet: View {
                         }
                         
                         Text("Add New Friend")
-                            .font(.custom(FontTokens.regular, size: 17))
+                            .font(.Body)
                             .foregroundColor(.gray.opacity(0.6))
                         
                         Spacer()
@@ -175,12 +175,12 @@ private extension PaidBySelectionSheet {
             }
 
             Text(payer.displayName)
-                .font(.custom(FontTokens.regular, size: 14))
+                .font(.system(size: 14, weight: FontTokens.regular))
                 .foregroundColor(.black)
             
             if payer.isCurrentUser {
                 Text("(Me)")
-                    .font(.custom(FontTokens.regular, size: 14))
+                    .font(.system(size: 14, weight: FontTokens.regular))
                     .foregroundColor(.gray.opacity(0.6))
             }
             
@@ -189,7 +189,7 @@ private extension PaidBySelectionSheet {
             if viewModel.isSelected(payer) {
                 HStack(spacing: 4) {
                     Text("Rp")
-                        .font(.custom(FontTokens.regular, size: 12))
+                        .font(.Caption)
                         .foregroundColor(.secondary)
                     
                     TextField("0", text: Binding(
@@ -199,7 +199,7 @@ private extension PaidBySelectionSheet {
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .frame(width: 90)
-                    .font(.custom(FontTokens.medium, size: 16))
+                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
@@ -221,10 +221,10 @@ private extension PaidBySelectionSheet {
             VStack(spacing: 12) {
                 HStack {
                     Text("Total Paid")
-                        .font(.custom(FontTokens.regular, size: 16))
+                        .font(.Callout)
                     Spacer()
                     Text(viewModel.currentTotalPaid.formatted(.currency(code: "IDR")))
-                        .font(.custom(FontTokens.bold, size: 18))
+                        .font(.system(size: 18, weight: FontTokens.bold))
                         .foregroundColor(
                             viewModel.isTotalMatching ? .black : .red
                         )
@@ -233,10 +233,10 @@ private extension PaidBySelectionSheet {
                 if viewModel.remainingAmount != 0 {
                     HStack {
                         Text("Remaining")
-                            .font(.custom(FontTokens.regular, size: 14))
+                            .font(.system(size: 14, weight: FontTokens.regular))
                         Spacer()
                         Text(viewModel.remainingAmount.formatted(.currency(code: "IDR")))
-                            .font(.custom(FontTokens.medium, size: 14))
+                            .font(.system(size: 14, weight: FontTokens.medium))
                             .foregroundColor(.black)
                     }
                 }

@@ -16,10 +16,10 @@ final class PaymentMethodEntity {
     var id: UUID?
 
     // MARK: - Data
-    var providerName: String
-    var destination: String
-    var holderName: String
-    var isDefault: Bool
+    var providerName: String?
+    var destination: String?
+    var holderName: String?
+    var isDefault: Bool? = false
 
     // MARK: - Relationship
     @Relationship

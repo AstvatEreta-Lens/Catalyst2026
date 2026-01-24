@@ -58,7 +58,7 @@ final class UserEntity {
     
     /// Whether the user has completed the onboarding flow
     /// BACKEND NOTE: Check this flag to determine if user needs onboarding
-    var hasCompletedOnboarding: Bool
+    var hasCompletedOnboarding: Bool? = false
 
     // MARK: - Relationships
     

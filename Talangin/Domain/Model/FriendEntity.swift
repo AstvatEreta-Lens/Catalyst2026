@@ -24,7 +24,7 @@ final class FriendEntity {
     var profilePhotoData: Data?
     
     // MARK: - Relationships
-    @Relationship
+    @Relationship(deleteRule: .nullify)
     var groups: [GroupEntity]? = []
     
     @Relationship(inverse: \SplitParticipantEntity.friend)

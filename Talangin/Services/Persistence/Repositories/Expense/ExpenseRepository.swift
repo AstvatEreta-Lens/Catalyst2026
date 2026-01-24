@@ -148,15 +148,40 @@ final class ExpenseRepository {
     
     // MARK: - Read
     func fetchAllExpenses() throws -> [ExpenseEntity] {
-        let descriptor = FetchDescriptor<ExpenseEntity>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        return try modelContext.fetch(descriptor)
+        print("🔍 ExpenseRepository: Fetching all expenses...")
+        
+        do {
+            let descriptor = FetchDescriptor<ExpenseEntity>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            let expenses = try modelContext.fetch(descriptor)
+            print("✅ ExpenseRepository: Fetched \(expenses.count) expenses")
+            
+            for (index, expense) in expenses.enumerated() {
+                let itemCount = expense.items?.count ?? 0
+                print("   [\(index)] '\(expense.title ?? "Untitled")' - Rp \(expense.totalAmount ?? 0) (\(itemCount) items)")
+            }
+            
+            return expenses
+        } catch {
+            print("❌ ExpenseRepository: Failed to fetch expenses - \(error.localizedDescription)")
+            throw error
+        }
     }
     
     // MARK: - Delete
     func deleteExpense(_ expense: ExpenseEntity) throws {
-        modelContext.delete(expense)
-        try modelContext.save()
+        let expenseTitle = expense.title ?? "Untitled"
+        let expenseId = expense.id?.uuidString ?? "nil"
+        print("🗑️ ExpenseRepository: Deleting expense '\(expenseTitle)' (ID: \(expenseId))...")
+        
+        do {
+            modelContext.delete(expense)
+            try modelContext.save()
+            print("✅ ExpenseRepository: Expense '\(expenseTitle)' deleted successfully")
+        } catch {
+            print("❌ ExpenseRepository: Failed to delete expense - \(error.localizedDescription)")
+            throw error
+        }
     }
 }

@@ -41,7 +41,7 @@ struct SplitSchemeSheetView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("List Split")
-                                    .font(.custom(FontTokens.bold, size: 16))
+                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                                     .foregroundColor(.black)
                                 
                                 Spacer()
@@ -52,7 +52,7 @@ struct SplitSchemeSheetView: View {
                                             Image(systemName: "plus.circle.fill")
                                             Text("Add")
                                         }
-                                        .font(.custom(FontTokens.bold, size: 14))
+                                        .font(.system(size: 14, weight: FontTokens.bold))
                                         .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.3))
                                     }
                                 }
@@ -101,7 +101,7 @@ struct SplitSchemeSheetView: View {
                 
                 ToolbarItem(placement: .principal) {
                     Text("Split Type")
-                        .font(.custom(FontTokens.bold, size: 17))
+                        .font(.Headline)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -109,7 +109,7 @@ struct SplitSchemeSheetView: View {
                         splitResult = viewModel.confirmResult()
                         dismiss()
                     }
-                    .font(.custom(FontTokens.bold, size: 17))
+                    .font(.Headline)
                     .foregroundColor(.blue)
                     .disabled(!viewModel.isTotalMatching && viewModel.selectedMethod != .equally)
                 }
@@ -136,11 +136,11 @@ private struct SplitHeaderView: View {
             
             VStack(spacing: 4) {
                 Text(title)
-                    .font(.custom(FontTokens.bold, size: 20))
+                    .font(.Title3)
                     .foregroundColor(.black)
                 
                 Text(description)
-                    .font(.custom(FontTokens.regular, size: 13))
+                    .font(.Footnote)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
@@ -177,10 +177,10 @@ private struct SplitFooterView: View {
             Divider()
             HStack {
                 Text("Total Split")
-                    .font(.custom(FontTokens.medium, size: 16))
+                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                 Spacer()
                 Text(totalSplit.formatted(.currency(code: "IDR")))
-                    .font(.custom(FontTokens.bold, size: 16))
+                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                     .foregroundColor(isMatching ? .black : .red)
             }
             .padding(.horizontal, 24)
@@ -201,12 +201,12 @@ private struct EquallySplitView: View {
                     InitialsAvatar(initials: friend.avatarInitials, size: 36)
                     
                     Text(friend.fullName ?? "Unknown")
-                        .font(.custom(FontTokens.medium, size: 16))
+                        .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                     
                     Spacer()
                     
                     Text(equalShare.formatted(.currency(code: "IDR")))
-                        .font(.custom(FontTokens.bold, size: 16))
+                        .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                         .foregroundColor(.black)
                 }
                 .padding(.horizontal)
@@ -231,13 +231,13 @@ private struct UnequallySplitView: View {
                     InitialsAvatar(initials: friend.avatarInitials, size: 36)
                     
                     Text(friend.fullName ?? "Unknown")
-                        .font(.custom(FontTokens.medium, size: 16))
+                        .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                     
                     Spacer()
                     
                     HStack(spacing: 4) {
                         Text("Rp")
-                            .font(.custom(FontTokens.regular, size: 14))
+                            .font(.system(size: 14, weight: FontTokens.regular))
                             .foregroundColor(.secondary)
                         
                         TextField("___________", text: Binding(
@@ -246,7 +246,7 @@ private struct UnequallySplitView: View {
                         ))
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
-                        .font(.custom(FontTokens.bold, size: 16))
+                        .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                         .frame(width: 100)
                     }
                 }
@@ -268,7 +268,7 @@ private struct ItemizedSplitView: View {
         VStack(spacing: 0) {
             if viewModel.items.isEmpty {
                 Text("No items added yet.")
-                    .font(.custom(FontTokens.regular, size: 14))
+                    .font(.system(size: 14, weight: FontTokens.regular))
                     .foregroundColor(.secondary)
                     .padding(.vertical, 30)
                     .padding(.horizontal, 20)
@@ -295,18 +295,18 @@ private struct ItemizedSplitView: View {
             }
             
             TextField("Item", text: $viewModel.items[index].name)
-                .font(.custom(FontTokens.regular, size: 16))
+                .font(.Callout)
             
             HStack(spacing: 4) {
                 Text("Rp")
-                    .font(.custom(FontTokens.regular, size: 14))
+                    .font(.system(size: 14, weight: FontTokens.regular))
                     .foregroundColor(.black)
                     .fixedSize(horizontal: true, vertical: false)
                 
                 TextField("Price", value: $viewModel.items[index].price, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
-                    .font(.custom(FontTokens.bold, size: 16))
+                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                     .frame(width: 70)
             }
             .padding(.horizontal, 8)
@@ -331,7 +331,7 @@ private struct ItemizedSplitView: View {
             HStack(spacing: 4) {
                 Text(viewModel.getBeneficiaryName(for: viewModel.items[index].assignedBeneficiaryID))
                     .lineLimit(1)
-                    .font(.custom(FontTokens.regular, size: 14))
+                    .font(.system(size: 14, weight: FontTokens.regular))
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .bold))
             }
