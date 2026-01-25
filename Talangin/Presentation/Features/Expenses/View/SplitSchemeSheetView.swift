@@ -238,9 +238,10 @@ private struct UnequallySplitView: View {
                     HStack(spacing: 4) {
                         Text("Rp")
                             .font(.system(size: 14, weight: FontTokens.regular))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.black)
+                            .fixedSize(horizontal: true, vertical: false)
                         
-                        TextField("___________", text: Binding(
+                        TextField("", text: Binding(
                             get: { friend.id.flatMap { manualAmounts[$0] } ?? "" },
                             set: { if let id = friend.id { manualAmounts[id] = $0 } }
                         ))
@@ -249,6 +250,10 @@ private struct UnequallySplitView: View {
                         .font(.system(size: FontTokens.Callout.size, weight: FontTokens.bold))
                         .frame(width: 100)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Color(uiColor: .secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 14)

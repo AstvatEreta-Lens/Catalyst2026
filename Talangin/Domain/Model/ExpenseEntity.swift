@@ -39,6 +39,16 @@ final class ExpenseEntity {
     @Relationship
     var group: GroupEntity?
     
+    var payers: [PayerCodable] {
+        guard let data = payersData else { return [] }
+        return (try? JSONDecoder().decode([PayerCodable].self, from: data)) ?? []
+    }
+    
+    var beneficiaries: [BeneficiaryCodable] {
+        guard let data = beneficiariesData else { return [] }
+        return (try? JSONDecoder().decode([BeneficiaryCodable].self, from: data)) ?? []
+    }
+    
     init(
         id: UUID = UUID(),
         title: String,

@@ -10,28 +10,30 @@ struct AddNewExpenseView: View {
     
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = AddNewExpenseViewModel()
+    @StateObject private var viewModel: AddNewExpenseViewModel
+    
+    init(group: GroupEntity? = nil) {
+        _viewModel = StateObject(wrappedValue: AddNewExpenseViewModel(group: group))
+    }
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                Color(uiColor: .secondarySystemBackground)
-                headerSection
-                    .ignoresSafeArea()
-                
-                VStack {
+                ScrollView{
+                    ZStack(alignment: .top) {
+                    headerSection
+                  
                     VStack(spacing: 24) {
                         mainCard
                         splitWithSection
                         splitTypeSection
                     }
-                    .padding(.top, 130)
+                    .padding(.top, 160)
                     .padding(.horizontal)
                     .padding(.bottom, 30)
                 }
                 
             }
-            .ignoresSafeArea(edges: .bottom)
+            .ignoresSafeArea()
             .navigationBarHidden(true)
             .onAppear {
                 viewModel.injectContext(modelContext)
@@ -64,6 +66,7 @@ struct AddNewExpenseView: View {
                 .presentationDragIndicator(.visible)
             }
         }
+        .background(Color(uiColor: .secondarySystemBackground))
     }
     
     private var headerSection: some View {
@@ -72,8 +75,17 @@ struct AddNewExpenseView: View {
         .overlay(
             VStack(spacing: 20) {
                 // Custom Navigation Bar
+            
                 HStack {
+                    Button("Cancel") {
+                       dismiss()
+                    }
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    
                     Spacer()
+                    
                     Button("Create") {
                         viewModel.saveExpense {
                             dismiss()

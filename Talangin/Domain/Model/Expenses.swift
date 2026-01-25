@@ -27,7 +27,7 @@ enum SplitResult: Equatable {
 }
 
 // MARK: - Expense Item Model
-struct ExpenseItem: Identifiable, Equatable, Encodable{
+struct ExpenseItem: Identifiable, Equatable, Codable {
     let id: UUID
     var name: String
     var price: Double

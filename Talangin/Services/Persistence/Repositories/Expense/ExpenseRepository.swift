@@ -23,7 +23,8 @@ final class ExpenseRepository {
         totalAmount: Double,
         payers: [Payer],
         beneficiaries: [FriendEntity],
-        splitResult: SplitResult
+        splitResult: SplitResult,
+        targetGroup: GroupEntity? = nil
     ) throws {
         // Encode payers
         let payersCodable = payers.map { payer in
@@ -55,8 +56,6 @@ final class ExpenseRepository {
         case .unequally(let amounts):
             splitDetailsData = try? JSONEncoder().encode(amounts)
         case .itemized(let items):
-            // Use old JSON for backward compatibility/safety if needed, 
-            // but primarily create persistent entities
             splitDetailsData = try? JSONEncoder().encode(items)
             persistenceItems = items.map { item in
                 ExpenseItemEntity(
@@ -70,47 +69,51 @@ final class ExpenseRepository {
             break
         }
         
+        let groupToLink: GroupEntity
         
-        // Create Untitled Group with all participants
-        let groupRepository = GroupRepository(modelContext: modelContext)
-        
-        print("📦 Creating Untitled Group...")
-        print("👥 Beneficiaries to add: \(beneficiaries.count)")
-        
-        // Combine all unique participants and ensure they're persisted
-        var allMembers: [FriendEntity] = []
-        var seenIDs: Set<UUID> = []
-        
-        for beneficiary in beneficiaries {
-            if let id = beneficiary.id {
-                if !seenIDs.contains(id) {
-                    // Check if this entity already exists in the context or database
-                    let descriptor = FetchDescriptor<FriendEntity>(predicate: #Predicate { $0.id == id })
-                    
-                    if let existing = try? modelContext.fetch(descriptor).first {
-                        print("  🔗 Using existing entity: \(existing.fullName ?? "Unknown")")
-                        allMembers.append(existing)
-                    } else {
-                        print("  ➕ Inserting new entity: \(beneficiary.fullName ?? "Unknown")")
-                        modelContext.insert(beneficiary)
-                        allMembers.append(beneficiary)
+        if let targetGroup = targetGroup {
+            print("📦 Using provided target group: \(targetGroup.name ?? "Untitled")")
+            groupToLink = targetGroup
+        } else {
+            // Create Untitled Group with all participants
+            let groupRepository = GroupRepository(modelContext: modelContext)
+            
+            print("📦 Creating Untitled Group...")
+            print("👥 Beneficiaries to add: \(beneficiaries.count)")
+            
+            // Combine all unique participants and ensure they're persisted
+            var allMembers: [FriendEntity] = []
+            var seenIDs: Set<UUID> = []
+            
+            for beneficiary in beneficiaries {
+                if let id = beneficiary.id {
+                    if !seenIDs.contains(id) {
+                        let descriptor = FetchDescriptor<FriendEntity>(predicate: #Predicate { $0.id == id })
+                        
+                        if let existing = try? modelContext.fetch(descriptor).first {
+                            print("  🔗 Using existing entity: \(existing.fullName ?? "Unknown")")
+                            allMembers.append(existing)
+                        } else {
+                            print("  ➕ Inserting new entity: \(beneficiary.fullName ?? "Unknown")")
+                            modelContext.insert(beneficiary)
+                            allMembers.append(beneficiary)
+                        }
+                        seenIDs.insert(id)
                     }
-                    seenIDs.insert(id)
                 }
             }
+            
+            print("💾 Saving \(allMembers.count) members to database...")
+            try modelContext.save()
+            
+            print("🏗️ Creating group with \(allMembers.count) members...")
+            groupToLink = try groupRepository.createGroup(
+                name: "Untitled Group",
+                description: "Auto-created from expense: \(title)",
+                members: allMembers
+            )
+            print("✅ Group created with ID: \(groupToLink.id?.uuidString ?? "nil")")
         }
-        
-        print("💾 Saving \(allMembers.count) members to database...")
-        try modelContext.save()
-        
-        print("🏗️ Creating group with \(allMembers.count) members...")
-        let untitledGroup = try groupRepository.createGroup(
-            name: "Untitled Group",
-            description: "Auto-created from expense: \(title)",
-            members: allMembers
-        )
-        
-        print("✅ Group created with ID: \(untitledGroup.id?.uuidString ?? "nil")")
         
         let expense = ExpenseEntity(
             title: title,
@@ -119,7 +122,7 @@ final class ExpenseRepository {
             payersData: payersData,
             beneficiariesData: beneficiariesData,
             splitDetailsData: splitDetailsData,
-            group: untitledGroup
+            group: groupToLink
         )
         
         if !persistenceItems.isEmpty {

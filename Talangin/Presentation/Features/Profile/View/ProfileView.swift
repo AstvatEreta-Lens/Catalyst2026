@@ -22,83 +22,89 @@ struct ProfileView: View {
     @State private var showEditProfile = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // MARK: - Profile Header
-                    ProfileHeaderView(
-                        profilePhotoData: viewModel.profilePhotoData,
-                        fullName: viewModel.fullName,
-                        email: viewModel.email,
-                        accountBadge: viewModel.isPremium ? "Premium" : "Free Account",
-                        onEditTapped: {
-                            showEditProfile = true
-                        },
-                        onPhotoChanged: { data in
-                            viewModel.updatePhoto(data)
-                        }
-                    )
-
-                    // MARK: - Premium Banner (only show for free users)
-                    if !viewModel.isPremium {
-                        PremiumBannerView {
-                            showPaywall = true
-                        }
+        ScrollView {
+            VStack(spacing: 0) {
+                // MARK: - Profile Header
+                ProfileHeaderView(
+                    profilePhotoData: viewModel.profilePhotoData,
+                    fullName: viewModel.fullName,
+                    email: viewModel.email,
+                    accountBadge: viewModel.isPremium ? "Premium" : "Free Account",
+                    onEditTapped: {
+                        showEditProfile = true
+                    },
+                    onPhotoChanged: { data in
+                        viewModel.updatePhoto(data)
                     }
+                )
+                .ignoresSafeArea(edges: .all)
 
-                    // MARK: - Payment Account
-                    ProfileSectionHeader(title: "PAYMENT ACCOUNT")
-                    Section{
-                        paymentAccountSection
+                // MARK: - Premium Banner (only show for free users)
+                if !viewModel.isPremium {
+                    PremiumBannerView {
+                        showPaywall = true
                     }
-            
-                    
+                }
 
-                    // MARK: - Groups and Friends
-                    ProfileSectionHeader(title: "PEOPLE AND GROUPS")
-                    groupsAndFriendsSection
+                // MARK: - Payment Account
+                ProfileSectionHeader(title: "PAYMENT ACCOUNT")
+                paymentAccountSection
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, AppSpacing.lg)
 
-                    // MARK: - Preferences
-                    ProfileSectionHeader(title: "PREFERENCES")
-                    preferencesSection
+                // MARK: - Groups and Friends
+                ProfileSectionHeader(title: "PEOPLE AND GROUPS")
+                groupsAndFriendsSection
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, AppSpacing.lg)
 
-                    // MARK: - About
-                    ProfileSectionHeader(title: "ABOUT")
-                    aboutSection
-                }
+                // MARK: - Preferences
+                ProfileSectionHeader(title: "PREFERENCES")
+                preferencesSection
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, AppSpacing.lg)
+
+                // MARK: - About
+                ProfileSectionHeader(title: "ABOUT")
+                aboutSection
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.xxxl)
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.large)
-            .alert(
-                "Log Out",
-                isPresented: $showLogoutConfirm
-            ) {
-                Button("Log Out", role: .destructive) {
-                    authState.logout()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Are you sure you want to log out?")
+        }
+        .background(Color(.systemGroupedBackground))
+        .alert(
+            "Log Out",
+            isPresented: $showLogoutConfirm
+        ) {
+            Button("Log Out", role: .destructive) {
+                authState.logout()
             }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK", role: .cancel) {
-                    viewModel.errorMessage = nil
-                }
-            } message: {
-                Text(viewModel.errorMessage ?? "An error occurred")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to log out?")
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK", role: .cancel) {
+                viewModel.errorMessage = nil
             }
-            .fullScreenCover(isPresented: $showPaywall) {
-                PaywallView()
-            }
-            .sheet(isPresented: $showEditProfile) {
-                EditProfileView(
-                    currentName: viewModel.fullName,
-                    currentEmail: viewModel.email,
-                    currentPhone: viewModel.phoneNumber
-                ) { name, email, phone in
-                    viewModel.updateProfile(name: name, email: email, phone: phone)
-                }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
+        }
+        .fullScreenCover(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView(
+                currentName: viewModel.fullName,
+                currentEmail: viewModel.email,
+                currentPhone: viewModel.phoneNumber
+            ) { name, email, phone in
+                viewModel.updateProfile(name: name, email: email, phone: phone)
             }
         }
         .onAppear {
@@ -117,7 +123,7 @@ struct ProfileView: View {
             }
         } label: {
             ProfileMenuRow(
-                title: viewModel.paymentMethods.first?.providerName ?? "Add Payment",
+                title: viewModel.paymentMethods.first?.providerName ?? "Set payment account",
                 type: .navigation
             )
         }
@@ -162,7 +168,6 @@ struct ProfileView: View {
                 type: .menu(selectedValue: $viewModel.selectedLanguage, options: ProfileViewModel.languageOptions)
             )
         }
-        .background(Color(.systemBackground))
     }
 
     // MARK: - About Section
@@ -198,13 +203,14 @@ struct ProfileView: View {
                 type: .textOnly(value: ProfileViewModel.appVersion)
             )
         }
-        .background(Color(.systemBackground))
-        .padding(.bottom, 32)
     }
 }
 
 
 #Preview {
-    ProfileView()
+    NavigationStack {
+        ProfileView()
+            .environmentObject(AppAuthState())
+    }
 }
 

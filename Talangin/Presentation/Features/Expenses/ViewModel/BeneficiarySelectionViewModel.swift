@@ -124,10 +124,10 @@ final class BeneficiarySelectionViewModel {
         
         friends = [friend1, friend2, friend3, friend4, friend5]
         
-        // Create mock groups
-        let group1 = GroupEntity(name: "Kemping", members: [friend1, friend2, friend3])
-        let group2 = GroupEntity(name: "Kantor", members: [friend4, friend5])
-        
-        groups = [group1, group2]
+//        // Create mock groups
+//        let group1 = GroupEntity(name: "Kemping", members: [friend1, friend2, friend3])
+//        let group2 = GroupEntity(name: "Kantor", members: [friend4, friend5])
+//        
+//        groups = [group1, group2]
     }
 }

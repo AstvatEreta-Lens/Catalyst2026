@@ -25,6 +25,8 @@ final class AddNewExpenseViewModel: ObservableObject {
     @Published var selectedGroups: [GroupEntity] = []
     @Published var selectedPayers: [Payer] = []
     
+    private let preselectedGroup: GroupEntity?
+    
     // MARK: - UI Flow State
     @Published var showBeneficiarySheet = false
     @Published var showSplitSchemeSheet = false
@@ -148,7 +150,12 @@ final class AddNewExpenseViewModel: ObservableObject {
     
     // MARK: - Initialization
     
-    init() {}
+    init(group: GroupEntity? = nil) {
+        self.preselectedGroup = group
+        if let group = group {
+            self.selectedGroups = [group]
+        }
+    }
     
     func injectContext(_ context: ModelContext) {
         self.modelContext = context
@@ -170,7 +177,8 @@ final class AddNewExpenseViewModel: ObservableObject {
                 totalAmount: amount,
                 payers: selectedPayers,
                 beneficiaries: allBeneficiaries,
-                splitResult: splitResult
+                splitResult: splitResult,
+                targetGroup: preselectedGroup
             )
             print("✅ Expense saved successfully!")
             onSuccess()

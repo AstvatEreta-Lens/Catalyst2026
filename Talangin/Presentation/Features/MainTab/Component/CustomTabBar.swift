@@ -79,3 +79,7 @@ struct TabBarButton: View {
         }
     }
 }
+
+#Preview {
+        CustomTabBar(selectedTab: .constant(.home), tabs: [], onAddTap: { })
+}

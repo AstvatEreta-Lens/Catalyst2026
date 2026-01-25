@@ -60,9 +60,8 @@ struct ProfileMenuRow: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.md)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Button Row (External Link)
@@ -79,9 +78,8 @@ struct ProfileMenuRow: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
             }
-            .padding(.horizontal, AppSpacing.lg)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, AppSpacing.md)
-            .background(Color(.systemBackground))
         }
     }
 
@@ -109,9 +107,8 @@ struct ProfileMenuRow: View {
                 }
             }
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Toggle Row
@@ -124,9 +121,8 @@ struct ProfileMenuRow: View {
             Toggle("", isOn: isOn)
                 .tint(AppColors.toggleTint)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Text Only Row
@@ -140,9 +136,8 @@ struct ProfileMenuRow: View {
                 .font(.Body)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.md)
-        .background(Color(.systemBackground))
     }
 }
 
