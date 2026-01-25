@@ -65,12 +65,12 @@ struct ProfileHeaderView: View {
                     Text(accountBadge)
                         .font(.Caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(accountBadge == "Premium" ? .white : Color(red: 0.20, green: 0.45, blue: 0.80))
                         .padding(.horizontal, AppSpacing.xs)
                         .padding(.vertical, AppSpacing.xxs)
                         .background(
                             Capsule()
-                                .fill(accountBadge == "Premium" ? AppColors.badgePremium : AppColors.accentWater)
+                                .fill(accountBadge == "Premium" ? AppColors.badgePremium : Color(red: 0.85, green: 0.94, blue: 0.99))
                         )
                 }
 

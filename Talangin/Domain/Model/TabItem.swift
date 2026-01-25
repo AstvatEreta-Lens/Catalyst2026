@@ -9,7 +9,6 @@ import SwiftUI
 
 enum TabDestination: Hashable {
     case home
-    case friends
     case profile
 }
 

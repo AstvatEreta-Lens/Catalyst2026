@@ -30,15 +30,12 @@ final class AuthViewModel: NSObject, ObservableObject {
 
     // MARK: - Email Login
     func loginWithEmail() {
-        // TODO: implement later
+
         print("Login with email:", email)
     }
     
     func logout() {
-    
             KeychainService.delete(for: "appleUserID")
-
-
             isAuthenticated = false
         }
 

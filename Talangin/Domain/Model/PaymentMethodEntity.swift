@@ -13,21 +13,20 @@ import Foundation
 final class PaymentMethodEntity {
 
     // MARK: - Identity
-    @Attribute(.unique)
-    var id: UUID
+    var id: UUID?
 
     // MARK: - Data
-    var providerName: String
-    var destination: String
-    var holderName: String
-    var isDefault: Bool
+    var providerName: String?
+    var destination: String?
+    var holderName: String?
+    var isDefault: Bool? = false
 
     // MARK: - Relationship
-    @Relationship(inverse: \UserEntity.paymentMethods)
+    @Relationship
     var user: UserEntity?
 
     // MARK: - Metadata
-    var createdAt: Date
+    var createdAt: Date?
 
     init(
         providerName: String,

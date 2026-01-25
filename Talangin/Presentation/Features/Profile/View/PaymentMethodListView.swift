@@ -27,7 +27,7 @@ struct PaymentMethodListView: View {
 
     // MARK: - Computed Properties
     private var defaultMethod: PaymentMethodEntity? {
-        methods.first { $0.isDefault } ?? methods.first
+        methods.first { $0.isDefault == true } ?? methods.first
     }
 
     private var otherMethods: [PaymentMethodEntity] {
@@ -50,10 +50,10 @@ struct PaymentMethodListView: View {
                         EditPaymentMethodView(method: defaultMethod)
                     } label: {
                         PaymentMethodRow(
-                            providerName: defaultMethod.providerName,
-                            destination: defaultMethod.destination,
-                            holderName: defaultMethod.holderName,
-                            isDefault: defaultMethod.isDefault
+                            providerName: defaultMethod.providerName ?? "Unknown",
+                            destination: defaultMethod.destination ?? "-",
+                            holderName: defaultMethod.holderName ?? "",
+                            isDefault: defaultMethod.isDefault ?? false
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -70,10 +70,10 @@ struct PaymentMethodListView: View {
                             EditPaymentMethodView(method: method)
                         } label: {
                             PaymentMethodRow(
-                                providerName: method.providerName,
-                                destination: method.destination,
-                                holderName: method.holderName,
-                                isDefault: method.isDefault
+                                providerName: method.providerName ?? "Unknown",
+                                destination: method.destination ?? "-",
+                                holderName: method.holderName ?? "",
+                                isDefault: method.isDefault ?? false
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -106,78 +106,78 @@ struct PaymentMethodListView: View {
     }
 }
 
-#Preview {
-    PaymentMethodListPreview()
-}
-
-@MainActor
-private struct PaymentMethodListPreview: View {
-    @State private var container: ModelContainer?
-    @State private var methods: [PaymentMethodEntity] = []
-    @State private var user: UserEntity?
-    @State private var hasError = false
-    
-    var body: some View {
-        Group {
-            if hasError {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text("Preview Error")
-                        .font(.headline)
-                    Text("Failed to load SwiftData container")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            } else if let container = container, let user = user {
-                NavigationStack {
-                    PaymentMethodListView(methods: methods, user: user)
-                        .modelContainer(container)
-                }
-            } else {
-                ProgressView()
-                    .onAppear { setupPreview() }
-            }
-        }
-    }
-    
-    private func setupPreview() {
-        do {
-            let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            let newContainer = try ModelContainer(
-                for: Item.self, UserEntity.self, PaymentMethodEntity.self,
-                configurations: config
-            )
-
-            // Create mock payment methods
-            let mockUser = UserEntity(appleUserId: "preview")
-            let method1 = PaymentMethodEntity(
-                providerName: "BCA",
-                destination: "120-12038-19333",
-                holderName: "Rifqi Smith",
-                isDefault: true,
-                user: mockUser
-            )
-            let method2 = PaymentMethodEntity(
-                providerName: "GoPay",
-                destination: "081234566767",
-                holderName: "Rifqi Smith",
-                isDefault: false,
-                user: mockUser
-            )
-
-            // Insert into context on main actor
-            let context = newContainer.mainContext
-            context.insert(mockUser)
-            context.insert(method1)
-            context.insert(method2)
-            
-            self.container = newContainer
-            self.user = mockUser
-            self.methods = [method1, method2]
-        } catch {
-            hasError = true
-        }
-    }
-}
+//#Preview {
+//    PaymentMethodListPreview()
+//}
+//
+//@MainActor
+//private struct PaymentMethodListPreview: View {
+//    @State private var container: ModelContainer?
+//    @State private var methods: [PaymentMethodEntity] = []
+//    @State private var user: UserEntity?
+//    @State private var hasError = false
+//    
+//    var body: some View {
+//        Group {
+//            if hasError {
+//                VStack {
+//                    Image(systemName: "exclamationmark.triangle")
+//                        .font(.largeTitle)
+//                        .foregroundColor(.orange)
+//                    Text("Preview Error")
+//                        .font(.headline)
+//                    Text("Failed to load SwiftData container")
+//                        .font(.caption)
+//                        .foregroundColor(.secondary)
+//                }
+//            } else if let container = container, let user = user {
+//                NavigationStack {
+//                    PaymentMethodListView(methods: methods, user: user)
+//                        .modelContainer(container)
+//                }
+//            } else {
+//                ProgressView()
+//                    .onAppear { setupPreview() }
+//            }
+//        }
+//    }
+//    
+//    private func setupPreview() {
+//        do {
+//            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+//            let newContainer = try ModelContainer(
+//                for: Item.self, UserEntity.self, PaymentMethodEntity.self,
+//                configurations: config
+//            )
+//
+//            // Create mock payment methods
+//            let mockUser = UserEntity(appleUserId: "preview")
+//            let method1 = PaymentMethodEntity(
+//                providerName: "BCA",
+//                destination: "120-12038-19333",
+//                holderName: "Rifqi Smith",
+//                isDefault: true,
+//                user: mockUser
+//            )
+//            let method2 = PaymentMethodEntity(
+//                providerName: "GoPay",
+//                destination: "081234566767",
+//                holderName: "Rifqi Smith",
+//                isDefault: false,
+//                user: mockUser
+//            )
+//
+//            // Insert into context on main actor
+//            let context = newContainer.mainContext
+//            context.insert(mockUser)
+//            context.insert(method1)
+//            context.insert(method2)
+//            
+//            self.container = newContainer
+//            self.user = mockUser
+//            self.methods = [method1, method2]
+//        } catch {
+//            hasError = true
+//        }
+//    }
+//}

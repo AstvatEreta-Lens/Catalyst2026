@@ -37,38 +37,34 @@ import Foundation
 final class ContactEntity {
     
     // MARK: - Identity
-    @Attribute(.unique)
-    var id: UUID
+    var id: UUID?
     
     // MARK: - Profile Info
-    var fullName: String
-    var email: String
+    var fullName: String?
+    var email: String?
     var phoneNumber: String?
     
     // MARK: - Photo
-    /// Profile photo data stored locally (cached from server)
-    /// BACKEND NOTE: Replace with profilePhotoURL for server integration
     var profilePhotoData: Data?
     
     // MARK: - Relationships
-    /// Payment methods this contact has shared with the user
-    /// BACKEND NOTE: This should be fetched from server, not stored locally
     @Relationship(deleteRule: .cascade)
-    var paymentMethods: [ContactPaymentMethod] = []
+    var paymentMethods: [ContactPaymentMethod]? = []
     
-    /// Groups that both the user and this contact belong to
-    /// BACKEND NOTE: Use group IDs and fetch from server
-    var sharedGroupIds: [UUID] = []
+    /// Groups that both the user and this contact belong to (stored as Data)
+    /// BACKEND NOTE: SwiftData doesn't support [UUID] directly, so we encode it
+    @Attribute(.externalStorage)
+    var sharedGroupIdsData: Data?
     
     // MARK: - Metadata
-    var createdAt: Date
-    var updatedAt: Date
+    var createdAt: Date?
+    var updatedAt: Date?
     
     // MARK: - Computed Properties
     
     /// Returns initials from fullName (e.g., "John Doe" -> "JD")
     var initials: String {
-        let components = fullName.split(separator: " ")
+        let components = (fullName ?? "Unknown").split(separator: " ")
         let initials = components.prefix(2).compactMap { $0.first }
         return String(initials).uppercased()
     }
@@ -76,6 +72,17 @@ final class ContactEntity {
     /// Checks if contact has a profile photo
     var hasProfilePhoto: Bool {
         profilePhotoData != nil
+    }
+    
+    /// Helper to get/set sharedGroupIds as array
+    var sharedGroupIds: [UUID] {
+        get {
+            guard let data = sharedGroupIdsData else { return [] }
+            return (try? JSONDecoder().decode([UUID].self, from: data)) ?? []
+        }
+        set {
+            sharedGroupIdsData = try? JSONEncoder().encode(newValue)
+        }
     }
     
     // MARK: - Initializer
@@ -106,13 +113,12 @@ final class ContactEntity {
 @Model
 final class ContactPaymentMethod {
     
-    @Attribute(.unique)
-    var id: UUID
+    var id: UUID?
     
-    var providerName: String  // e.g., "BCA", "GoPay"
-    var destination: String   // Account number (may be partially masked)
-    var holderName: String
-    var isPrimary: Bool
+    var providerName: String?
+    var destination: String?
+    var holderName: String?
+    var isPrimary: Bool? = false
     
     @Relationship(inverse: \ContactEntity.paymentMethods)
     var contact: ContactEntity?

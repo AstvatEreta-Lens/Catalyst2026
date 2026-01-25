@@ -133,7 +133,7 @@ struct ContactsView: View {
                         .frame(width: 40, height: 40)
                     
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
                         .foregroundColor(.secondary)
                 }
                 
@@ -180,9 +180,13 @@ struct ContactsView: View {
         guard !searchText.isEmpty else {
             return mockContacts
         }
+
         return mockContacts.filter { contact in
-            contact.fullName.localizedCaseInsensitiveContains(searchText) ||
-            contact.email.localizedCaseInsensitiveContains(searchText)
+            (contact.fullName ?? "")
+                .localizedCaseInsensitiveContains(searchText)
+            ||
+            (contact.email ?? "")
+                .localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -191,7 +195,7 @@ struct ContactsView: View {
             return mockGroups
         }
         return mockGroups.filter { group in
-            group.name.localizedCaseInsensitiveContains(searchText)
+            (group.name ?? "").localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -227,7 +231,7 @@ private struct ContactRowView: View {
             )
             
             // Name
-            Text(contact.fullName)
+            Text(contact.fullName ?? "Unknown Contact")
                 .font(.Body)
                 .foregroundColor(.primary)
             
@@ -235,7 +239,7 @@ private struct ContactRowView: View {
             
             // Chevron
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14, weight: FontTokens.medium))
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, AppSpacing.lg)
@@ -255,7 +259,7 @@ private struct GroupRowView: View {
             GroupIconView(group: group, size: .small)
             
             // Group Name
-            Text(group.name)
+            Text(group.name ?? "Untitled")
                 .font(.Body)
                 .foregroundColor(.primary)
             
@@ -263,7 +267,7 @@ private struct GroupRowView: View {
             
             // Chevron
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14, weight: FontTokens.medium))
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, AppSpacing.lg)

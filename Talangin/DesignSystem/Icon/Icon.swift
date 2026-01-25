@@ -23,6 +23,7 @@ enum AppIcons {
         static let friend = "person.2"
         static let activity = "list.bullet.rectangle"
         static let profile = "person.crop.circle"
+        static let group = "person.3"
     }
 
     // MARK: - Expense

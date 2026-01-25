@@ -53,15 +53,15 @@ struct ProfileMenuRow: View {
     private var navigationRow: some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.md)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Button Row (External Link)
@@ -71,15 +71,15 @@ struct ProfileMenuRow: View {
         } label: {
             HStack {
                 Text(title)
+                    .font(.Body)
                     .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
             }
-            .padding(.horizontal, AppSpacing.lg)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, AppSpacing.md)
-            .background(Color(.systemBackground))
         }
     }
 
@@ -87,6 +87,7 @@ struct ProfileMenuRow: View {
     private func menuRow(selectedValue: Binding<String>, options: [String]) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Menu {
@@ -98,44 +99,45 @@ struct ProfileMenuRow: View {
             } label: {
                 HStack(spacing: AppSpacing.xxs) {
                     Text(selectedValue.wrappedValue)
-                        .foregroundColor(.secondary)
+                    .font(.Body)
+                    .foregroundColor(.secondary)
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
             }
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Toggle Row
     private func toggleRow(isOn: Binding<Bool>) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Toggle("", isOn: isOn)
                 .tint(AppColors.toggleTint)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.sm)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Text Only Row
     private func textOnlyRow(value: String) -> some View {
         HStack {
             Text(title)
+                .font(.Body)
                 .foregroundColor(.primary)
             Spacer()
             Text(value)
+                .font(.Body)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, AppSpacing.lg)
+        .padding(.horizontal, AppSpacing.md)
         .padding(.vertical, AppSpacing.md)
-        .background(Color(.systemBackground))
     }
 }
 

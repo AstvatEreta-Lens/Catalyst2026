@@ -7,45 +7,66 @@
 
 import SwiftUI
 import SwiftData
-
-
 struct MainTabView: View {
     @StateObject private var viewModel = MainTabViewModel()
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        TabView(selection: $viewModel.selectedTab) {
-            ForEach(viewModel.tabs) { tab in
-                destinationView(for: tab.destination)
-                    .tabItem {
-                        Label(tab.title, systemImage: tab.icon)
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                
+                // Content
+                Group {
+                    switch viewModel.selectedTab {
+                    case .home:
+                        HomeView()
+                    case .profile:
+                        ProfileView()
                     }
-                    .tag(tab.destination)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Custom TabBar
+                CustomTabBar(
+                    selectedTab: $viewModel.selectedTab,
+                    tabs: viewModel.tabs,
+                    onAddTap: viewModel.handleAddButtonTap
+                )
+            }
+            .ignoresSafeArea(.keyboard)
+            .sheet(isPresented: $viewModel.showAddSheet) {
+                AddActionSheet(
+                    onAddExpenses: viewModel.goToAddExpense,
+                    onCreateGroup: viewModel.goToCreateGroup,
+                    onJoinWithLink: viewModel.goToJoinWithLink
+                )
+            }
+            .navigationDestination(item: $viewModel.route) { route in
+                destinationView(for: route)
             }
         }
     }
 
     @ViewBuilder
-    private func destinationView(for destination: TabDestination) -> some View {
-        switch destination {
-        case .home:
-            HomeView()
+    private func destinationView(for route: MainRoute) -> some View {
+        switch route {
+        case .addExpense:
+            AddNewExpenseView()
+                .onDisappear { viewModel.clearRoute() }
 
-        case .friends:
-            FriendView()
+        case .createGroup:
+            CreateGroupView()
+                .onDisappear { viewModel.clearRoute() }
 
-        case .profile:
-            ProfileView()
+        case .joinWithLink:
+            JoinWithLinkView()
+                .onDisappear { viewModel.clearRoute() }
         }
     }
 }
 
-#Preview("English") {
-    MainTabView()
-        .environment(\.locale, .init(identifier: "en"))
-}
 
-#Preview("Indonesia") {
+#Preview {
     MainTabView()
         .environment(\.locale, .init(identifier: "id"))
 }

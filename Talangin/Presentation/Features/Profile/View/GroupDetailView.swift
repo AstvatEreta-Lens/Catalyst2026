@@ -54,7 +54,7 @@ struct GroupDetailView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(group.name)
+        .navigationTitle(group.name ?? "Untitled Group")
         .navigationBarTitleDisplayMode(.large)
     }
     
@@ -65,7 +65,7 @@ struct GroupDetailView: View {
             GroupIconView(group: group, size: .large)
             
             // Group Name
-            Text(group.name)
+            Text(group.name ?? "Untitled Group")
                 .font(.Title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -177,7 +177,7 @@ private struct MemberRow: View {
             // Name
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: AppSpacing.xs) {
-                    Text(member.fullName)
+                    Text(member.fullName ?? "Unknown")
                         .font(.Body)
                         .foregroundColor(.primary)
                     
@@ -188,7 +188,7 @@ private struct MemberRow: View {
                     }
                 }
                 
-                Text(member.email)
+                Text(member.email ?? "")
                     .font(.Caption)
                     .foregroundColor(.secondary)
             }
@@ -237,8 +237,8 @@ private struct ActionRow: View {
     }
 }
 
-#Preview {
-    NavigationStack {
-        GroupDetailView(group: GroupEntity.mockGroupWithMembers())
-    }
-}
+//#Preview {
+//    NavigationStack {
+//        GroupDetailView(group: GroupEntity.mockGroupWithMembers())
+//    }
+//}

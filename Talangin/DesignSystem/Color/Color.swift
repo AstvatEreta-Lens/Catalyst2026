@@ -22,8 +22,8 @@ enum ColorTokens {
     // SystemOlive
     static let systemOliveLight = Color( "#DFEEC9")
     static let systemOliveDark = Color( "#3C5111")
-    static let systemOlive02Light = Color( "#7BA426")
-    static let systemOlive02Dark = Color( "#99CA4C")
+    static let systemOlive02Light = Color( "#99CA4C")
+    static let systemOlive02Dark = Color( "#7BA426")
     
 
     // MARK: - NEUTRAL

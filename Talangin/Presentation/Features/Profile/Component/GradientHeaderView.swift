@@ -48,6 +48,9 @@ struct GradientHeaderView: View {
             
             // MARK: - Content
             VStack(spacing: AppSpacing.sm) {
+                
+
+                
                 // Profile Photo
                 ContactAvatarView(
                     initials: initials,
@@ -71,10 +74,13 @@ struct GradientHeaderView: View {
                 Text(subtitle)
                     .font(.Subheadline)
                     .foregroundColor(.white.opacity(0.9))
+                
+
+                
             }
-            .padding(.vertical, AppSpacing.xl)
+            .padding(.vertical, AppSpacing.xs)
         }
-        .frame(height: 220)
+        .frame(height: 320)
     }
 }
 
@@ -86,8 +92,8 @@ extension GradientHeaderView {
     init(contact: ContactEntity) {
         self.photoData = contact.profilePhotoData
         self.initials = contact.initials
-        self.name = contact.fullName
-        self.subtitle = contact.email
+        self.name = contact.fullName ?? "Unknown"
+        self.subtitle = contact.email ?? ""
     }
 }
 
