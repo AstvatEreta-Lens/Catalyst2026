@@ -34,7 +34,7 @@ struct CurrentExpenses: View {
             return allGroups
         } else {
             return allGroups.filter { group in
-                (group.name ?? "").localizedCaseInsensitiveContains(searchText)
+                (group.name).localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -81,7 +81,7 @@ struct CurrentExpenses: View {
                             } else {
                                 ForEach(filteredGroups) { group in
                                     let totalExpense = 250000.0
-                                    let memberInfo = "\(group.members?.count ?? 0) Anggota"
+                                    let memberInfo = "\(group.memberCount) Anggota"
                                     
                                     NavigationLink(destination: PayNowView()) {
                                         ExpensesList(
