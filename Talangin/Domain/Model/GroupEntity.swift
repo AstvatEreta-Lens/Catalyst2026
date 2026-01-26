@@ -147,3 +147,23 @@ extension GroupEntity {
         ]
     }
 }
+extension GroupEntity: ExpenseDisplayItem {
+    var displayName: String {
+        return name
+    }
+    
+    var displayInitials: String {
+        let components = name.components(separatedBy: " ")
+        if components.count >= 2 {
+            let first = components[0].first ?? " "
+            let second = components[1].first ?? " "
+            return "\(first)\(second)".uppercased()
+        } else {
+            return String(name.prefix(2)).uppercased()
+        }
+    }
+    
+    var displayImageData: Data? {
+        return groupPhotoData
+    }
+}
