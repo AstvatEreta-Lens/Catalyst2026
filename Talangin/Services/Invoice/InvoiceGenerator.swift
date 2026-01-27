@@ -17,7 +17,7 @@ class InvoiceGenerator {
         group: GroupEntity,
         members: [FriendEntity],
         expenses: [ExpenseEntity]
-    ) -> URL? {
+    ) async -> URL? {
         
         // Calculate settlements for all members
         var memberSettlements: [(member: FriendEntity, summary: MemberSettlementSummary)] = []

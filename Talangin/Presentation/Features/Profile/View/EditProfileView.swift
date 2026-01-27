@@ -4,111 +4,106 @@
 //
 //  Created by Rifqi Rahman on 19/01/26.
 //
-//  Edit profile sheet for updating user name, email, and phone number.
-//
-//  BACKEND DEVELOPER NOTES:
-//  -------------------------
-//  This view allows users to edit their profile information.
-//  
-//  Integration requirements:
-//  1. Validate email format before saving
-//  2. Validate phone number format (Indonesian format)
-//  3. Update UserEntity via repository
-//  4. Sync changes to CloudKit/server
-//  5. Handle validation errors gracefully
+//  Updated: Added profile photo editing with PhotosPicker and redesigned to match mockup.
 //
 
 import SwiftUI
+import PhotosUI
 
 struct EditProfileView: View {
     
     @Environment(\.dismiss) private var dismiss
-    
+
     // MARK: - Bindings from parent
     let currentName: String
     let currentEmail: String
     let currentPhone: String?
-    let onSave: (String, String, String?) -> Void
+    let currentPhotoData: Data?
+    let onSave: (String, String, String?, Data?) -> Void
     
     // MARK: - Local State
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var phone: String = ""
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var profileImage: UIImage?
     @State private var showValidationError = false
     @State private var validationMessage = ""
-    
+
     var body: some View {
-        NavigationStack {
-            List {
-                // MARK: - Profile Section
-                Section {
-                    // Name Field
-                    HStack {
-                        Text("Name")
-                            .foregroundColor(.primary)
-                        Spacer()
-                        TextField("Enter your name", text: $name)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.primary)
-                    }
-                    
-                    // Email Field
-                    HStack {
-                        Text("Email")
-                            .foregroundColor(.primary)
-                        Spacer()
-                        TextField("Enter your email", text: $email)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.primary)
-                            .keyboardType(.emailAddress)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                    
-                    // Phone Field
-                    HStack {
-                        Text("Phone")
-                            .foregroundColor(.primary)
-                        Spacer()
-                        TextField("Enter phone number", text: $phone)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.primary)
-                            .keyboardType(.phonePad)
-                    }
-                } header: {
-                    Text("PROFILE INFORMATION")
-                } footer: {
-                    Text("Your name and email are visible to friends you share expenses with.")
-                        .foregroundColor(.secondary)
-                }
-            }
-            .navigationTitle("Edit Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+        ZStack(alignment: .top) {
+            // MARK: - Background Color
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // MARK: - Header Section
+                headerSection
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProfile()
+                // MARK: - Form Section
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("PROFILE")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 24)
+                        
+                        VStack(spacing: 0) {
+                            // Name field
+                            customTextField(value: $name, placeholder: "Name")
+                            
+                            Divider()
+                                .padding(.leading, 20)
+                            
+                            // Email field
+                            customTextField(value: $email, placeholder: "Email", keyboardType: .emailAddress)
+                        }
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal, 16)
+                        
+                        // Phone section
+                        Text("PHONE")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 8)
+                        
+                        VStack(spacing: 0) {
+                            customTextField(value: $phone, placeholder: "Phone", keyboardType: .phonePad)
+                        }
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal, 16)
                     }
-                    .fontWeight(.semibold)
-                    .disabled(!hasChanges || !isValid)
+                    .padding(.bottom, 30)
                 }
             }
-            .alert("Validation Error", isPresented: $showValidationError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(validationMessage)
+            .ignoresSafeArea(edges: .top)
+        }
+        .navigationBarHidden(true)
+        .alert("Validation Error", isPresented: $showValidationError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(validationMessage)
+        }
+        .onAppear {
+            name = currentName
+            email = currentEmail
+            phone = currentPhone ?? ""
+            if let data = currentPhotoData {
+                profileImage = UIImage(data: data)
             }
-            .onAppear {
-                // Initialize with current values
-                name = currentName
-                email = currentEmail
-                phone = currentPhone ?? ""
+        }
+        .onChange(of: selectedItem) { oldItem, newItem in
+            Task {
+                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    await MainActor.run {
+                        profileImage = uiImage
+                    }
+                }
             }
         }
     }
@@ -116,9 +111,12 @@ struct EditProfileView: View {
     // MARK: - Computed Properties
     
     private var hasChanges: Bool {
-        name != currentName ||
-        email != currentEmail ||
-        phone != (currentPhone ?? "")
+        let nameChanged = name != currentName
+        let emailChanged = email != currentEmail
+        let phoneChanged = phone != (currentPhone ?? "")
+        let photoChanged = (profileImage?.jpegData(compressionQuality: 0.8)) != currentPhotoData
+        
+        return nameChanged || emailChanged || phoneChanged || photoChanged
     }
     
     private var isValid: Bool {
@@ -152,17 +150,132 @@ struct EditProfileView: View {
         
         // Save
         let phoneToSave = phone.isEmpty ? nil : phone
-        onSave(name.trimmingCharacters(in: .whitespaces), email, phoneToSave)
+        let photoToSave = profileImage?.jpegData(compressionQuality: 0.8)
+        onSave(name.trimmingCharacters(in: .whitespaces), email, phoneToSave, photoToSave)
         dismiss()
+    }
+}
+
+// MARK: - Components
+private extension EditProfileView {
+    
+    func customTextField(value: Binding<String>, placeholder: String, keyboardType: UIKeyboardType = .default) -> some View {
+        TextField(placeholder, text: value)
+            .font(.system(size: 16))
+            .padding(.vertical, 14)
+            .padding(.horizontal, 20)
+            .keyboardType(keyboardType)
+            .textInputAutocapitalization(keyboardType == .emailAddress ? .never : .words)
+            .autocorrectionDisabled(keyboardType == .emailAddress)
+    }
+    
+    var headerSection: some View {
+        ZStack(alignment: .top) {
+            // Gradient Background
+            LinearGradient(
+                stops: [
+                    Gradient.Stop(color: Color(red: 0.17, green: 0.28, blue: 0.7), location: 0.00),
+                    Gradient.Stop(color: Color(red: 0.12, green: 0.54, blue: 0.48), location: 0.82),
+                    Gradient.Stop(color: Color(red: 0.09, green: 0.71, blue: 0.28), location: 1.00),
+                ],
+                startPoint: UnitPoint(x: 0.02, y: 0),
+                endPoint: UnitPoint(x: 1, y: 1.04)
+            )
+            .frame(height: 320)
+            .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Custom Navigation Bar
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Profile")
+                                .font(.system(size: 17))
+                        }
+                        .foregroundColor(.white)
+                    }
+                    
+                    Spacer()
+                    
+                    Button("Save") {
+                        saveProfile()
+                    }
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .opacity(isValid ? 1.0 : 0.6)
+                    .disabled(!isValid)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 44 + 10) // Approx status bar + margin
+                
+                Spacer()
+                
+                // Profile Photo
+                PhotosPicker(selection: $selectedItem, matching: .images) {
+                    ZStack(alignment: .bottom) {
+                        ZStack {
+                            if let profileImage {
+                                Image(uiImage: profileImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 90, height: 90)
+                                    .clipShape(Circle())
+                            } else {
+                                Circle()
+                                    .fill(Color.white.opacity(0.3))
+                                    .frame(width: 90, height: 90)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 40, height: 40)
+                                            .foregroundColor(.white)
+                                    )
+                            }
+                        }
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        
+                        // Camera overlay circle (Centered at bottom overlap)
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.gray)
+                            )
+                            .offset(y: 16)
+                    }
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 32)
+                
+                // Badge
+                Text("Free Account")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Color(red: 0.09, green: 0.45, blue: 0.6))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.9))
+                    .clipShape(Capsule())
+                    .padding(.bottom, 24)
+            }
+            .frame(height: 320)
+        }
     }
 }
 
 #Preview {
     EditProfileView(
-        currentName: "John Doe",
+        currentName: "Rifqi Smith",
         currentEmail: "john.doe@gmail.com",
-        currentPhone: "081234567890"
-    ) { name, email, phone in
-        print("Saved: \(name), \(email), \(phone ?? "no phone")")
+        currentPhone: "081234567890",
+        currentPhotoData: nil
+    ) { name, email, phone, photo in
+        print("Saved: \(name), \(email), \(phone ?? "no phone"), photo: \(photo != nil)")
     }
 }

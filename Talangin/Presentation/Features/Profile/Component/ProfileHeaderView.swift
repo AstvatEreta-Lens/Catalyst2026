@@ -91,7 +91,8 @@ struct ProfileHeaderView: View {
             }
         }
         .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.lg)
+        .padding(.top, 50)
+        .frame(minHeight: 200)
         .background(Color(.systemBackground))
     }
 }

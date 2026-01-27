@@ -37,7 +37,8 @@ struct ProfileView: View {
                         viewModel.updatePhoto(data)
                     }
                 )
-                .ignoresSafeArea(edges: .all)
+                
+
 
                 // MARK: - Premium Banner (only show for free users)
                 if !viewModel.isPremium {
@@ -76,6 +77,8 @@ struct ProfileView: View {
                     .padding(.bottom, AppSpacing.xxxl)
             }
         }
+        .ignoresSafeArea(edges: .all)
+     
         .background(Color(.systemGroupedBackground))
         .alert(
             "Log Out",
@@ -102,9 +105,13 @@ struct ProfileView: View {
             EditProfileView(
                 currentName: viewModel.fullName,
                 currentEmail: viewModel.email,
-                currentPhone: viewModel.phoneNumber
-            ) { name, email, phone in
+                currentPhone: viewModel.phoneNumber,
+                currentPhotoData: viewModel.profilePhotoData
+            ) { name, email, phone, photoData in
                 viewModel.updateProfile(name: name, email: email, phone: phone)
+                if let photoData = photoData {
+                    viewModel.updatePhoto(photoData)
+                }
             }
         }
         .onAppear {

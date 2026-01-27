@@ -51,9 +51,12 @@ struct SplashView: View {
             // App Logo and Name
             HStack(spacing: AppSpacing.sm) {
                 // Logo Placeholder
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: 40, height: 40)
+               Image("AppIconImage")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+    
                 
                 Text("Talangin")
                     .font(.Title2)

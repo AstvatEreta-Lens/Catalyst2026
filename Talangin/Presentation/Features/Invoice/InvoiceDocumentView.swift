@@ -33,6 +33,8 @@ struct InvoiceDocumentView: View {
             }
         }
     }
+ 
+      
     
     @ViewBuilder
     private func invoicePage(pageIndex: Int, membersPerPage: Int) -> some View {
@@ -44,13 +46,15 @@ struct InvoiceDocumentView: View {
                 // Header with gradient (only on first page)
                 if pageIndex == 0 {
                     LinearGradient(
-                        colors: [
-                            Color(red: 60/255, green: 121/255, blue: 195/255),
-                            Color(red: 0.4, green: 0.7, blue: 0.6)
+                        stops: [
+                            Gradient.Stop(color: Color(red: 0.17, green: 0.28, blue: 0.7), location: 0.00),
+                            Gradient.Stop(color: Color(red: 0.12, green: 0.54, blue: 0.48), location: 0.82),
+                            Gradient.Stop(color: Color(red: 0.09, green: 0.71, blue: 0.28), location: 1.00),
                         ],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: UnitPoint(x: 0.02, y: 0),
+                        endPoint: UnitPoint(x: 1, y: 1.04)
                     )
+               
                     .frame(height: 60)
                 }
                 
@@ -93,13 +97,15 @@ struct InvoiceDocumentView: View {
             HStack(alignment: .top) {
                 // App logo/icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 60, height: 60)
+                    //                    RoundedRectangle(cornerRadius: 12)
+                    //                        .fill(Color.gray.opacity(0.2))
+                    //                        .frame(width: 60, height: 60)
                     
-                    Text("T")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(Color(red: 60/255, green: 121/255, blue: 195/255))
+                    Image("AppIconImage")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -158,30 +164,23 @@ struct InvoiceDocumentView: View {
         HStack(spacing: 16) {
             Text("Name")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Color(red: 0.24, green: 0.47, blue: 0.76))
                 .frame(width: 120, alignment: .leading)
             
             Text("Status")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Color(red: 0.24, green: 0.47, blue: 0.76))
                 .frame(width: 150, alignment: .leading)
             
             Text("Details")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Color(red: 0.24, green: 0.47, blue: 0.76))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.7, blue: 0.8).opacity(0.8),
-                    Color(red: 0.5, green: 0.75, blue: 0.85).opacity(0.8)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            Color(red: 0.84, green: 0.93, blue: 0.96)
         )
         .cornerRadius(8)
     }
@@ -311,10 +310,10 @@ struct InvoiceDocumentView: View {
     }
     
     private var footerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 4) {
             Divider()
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Note")
                     .font(.system(size: 12, weight: .bold))
                 
