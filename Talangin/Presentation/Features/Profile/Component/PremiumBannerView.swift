@@ -58,7 +58,7 @@ struct PremiumBannerView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 // MARK: - Premium Image
-                Image("premiumImage")
+                Image("premiumImage2")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 160, height: 150)
