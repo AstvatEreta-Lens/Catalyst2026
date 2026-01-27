@@ -102,10 +102,15 @@ struct ProfileView: View {
             EditProfileView(
                 currentName: viewModel.fullName,
                 currentEmail: viewModel.email,
-                currentPhone: viewModel.phoneNumber
-            ) { name, email, phone in
-                viewModel.updateProfile(name: name, email: email, phone: phone)
-            }
+                currentPhone: viewModel.phoneNumber,
+                currentPhotoData: viewModel.profilePhotoData,
+                onSave: { name, email, phone in
+                    viewModel.updateProfile(name: name, email: email, phone: phone)
+                },
+                onPhotoChanged: { data in
+                    viewModel.updatePhoto(data)
+                }
+            )
         }
         .onAppear {
             viewModel.injectContext(modelContext)

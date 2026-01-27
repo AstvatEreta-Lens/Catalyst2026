@@ -108,20 +108,45 @@ struct CreateGroupView: View {
             Button {
                 viewModel.showProfilePictureSheet = true
             } label: {
-                Group {
-                    if let photoData = viewModel.groupPhotoData,
-                       let uiImage = UIImage(data: photoData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        Image("placeholder-groupphoto")
-                            .resizable()
-                            .scaledToFill()
+                ZStack(alignment: .bottomTrailing) {
+                    Group {
+                        if let photoData = viewModel.groupPhotoData,
+                           let uiImage = UIImage(data: photoData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            ZStack {
+                                // Background
+                                Color(.systemBackground)
+                                
+                                // Placeholder icon
+                                Image(systemName: "photo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 40, height: 40)
+
+                            }
+                        }
+                    }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    
+                    // Camera icon circle (only show when no photo)
+                    if viewModel.groupPhotoData == nil {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.7))
+                                .frame(width: 24, height: 24)
+                            
+                            Image(systemName: "pencil")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .offset(x: 4, y: 4)
                     }
                 }
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             
             // Group Name TextField

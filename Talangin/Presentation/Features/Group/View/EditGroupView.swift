@@ -112,20 +112,47 @@ struct EditGroupView: View {
             Button {
                 viewModel.showProfilePictureSheet = true
             } label: {
-                Group {
-                    if let photoData = viewModel.groupPhotoData,
-                       let uiImage = UIImage(data: photoData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        Image("placeholder-groupphoto")
-                            .resizable()
-                            .scaledToFill()
+                ZStack(alignment: .bottomTrailing) {
+                    Group {
+                        if let photoData = viewModel.groupPhotoData,
+                           let uiImage = UIImage(data: photoData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            ZStack {
+                                // Background
+                                Color(.systemGray6)
+                                
+                                // Placeholder icon
+                                Image(systemName: "person.3.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 40, height: 40)
+                                
+                                // Dark overlay
+                                Color.black.opacity(0.3)
+                            }
+                        }
+                    }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
+                    // Camera icon circle (only show when no photo)
+                    if viewModel.groupPhotoData == nil {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 24, height: 24)
+                            
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.black)
+                        }
+                        .offset(x: 4, y: 4)
                     }
                 }
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             
             // Group Name TextField

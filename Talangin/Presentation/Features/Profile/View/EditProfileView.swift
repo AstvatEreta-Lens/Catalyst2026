@@ -19,6 +19,8 @@
 //
 
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct EditProfileView: View {
     
@@ -28,7 +30,9 @@ struct EditProfileView: View {
     let currentName: String
     let currentEmail: String
     let currentPhone: String?
+    let currentPhotoData: Data?
     let onSave: (String, String, String?) -> Void
+    let onPhotoChanged: ((Data) -> Void)?
     
     // MARK: - Local State
     @State private var name: String = ""
@@ -36,10 +40,69 @@ struct EditProfileView: View {
     @State private var phone: String = ""
     @State private var showValidationError = false
     @State private var validationMessage = ""
+    @State private var selectedItem: PhotosPickerItem?
     
     var body: some View {
         NavigationStack {
             List {
+                // MARK: - Profile Photo Section
+                Section {
+                    VStack(spacing: 16) {
+                        // Profile Photo with overlay
+                        Button {
+                            // Photo picker will be triggered via PhotosPicker overlay
+                        } label: {
+                            ZStack {
+                                // Profile Photo
+                                Group {
+                                    if let photoData = currentPhotoData,
+                                       let uiImage = UIImage(data: photoData) {
+                                        Image(uiImage: uiImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .resizable()
+                                            .foregroundStyle(.gray)
+                                    }
+                                }
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                
+                                // Subtle dark overlay with camera icon
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                                    .frame(width: 100, height: 100)
+                                
+                                // Camera icon
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .overlay(
+                            PhotosPicker(
+                                selection: $selectedItem,
+                                matching: .images
+                            ) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+                            .frame(width: 100, height: 100)
+                        )
+                        .onChange(of: selectedItem) {
+                            Task {
+                                if let data = try? await selectedItem?.loadTransferable(type: Data.self) {
+                                    onPhotoChanged?(data)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                
                 // MARK: - Profile Section
                 Section {
                     // Name Field
@@ -161,8 +224,13 @@ struct EditProfileView: View {
     EditProfileView(
         currentName: "John Doe",
         currentEmail: "john.doe@gmail.com",
-        currentPhone: "081234567890"
-    ) { name, email, phone in
-        print("Saved: \(name), \(email), \(phone ?? "no phone")")
-    }
+        currentPhone: "081234567890",
+        currentPhotoData: nil,
+        onSave: { name, email, phone in
+            print("Saved: \(name), \(email), \(phone ?? "no phone")")
+        },
+        onPhotoChanged: { data in
+            print("Photo changed: \(data.count) bytes")
+        }
+    )
 }
