@@ -16,7 +16,10 @@ struct CreateGroupView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: CreateEditGroupViewModel
     
+    let currentUserID: UUID
+    
     init(modelContext: ModelContext, currentUserID: UUID) {
+        self.currentUserID = currentUserID
         _viewModel = StateObject(wrappedValue: CreateEditGroupViewModel(
             modelContext: modelContext,
             currentUserID: currentUserID
@@ -138,21 +141,88 @@ struct CreateGroupView: View {
                 .font(.headline)
                 .foregroundColor(.primary)
             
-            Button {
-                viewModel.showMemberSelection = true
-            } label: {
-                HStack {
-                    Text(viewModel.membersText)
-                        .font(.body)
-                        .foregroundColor(viewModel.selectedMembers.isEmpty ? .secondary : .primary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.secondary)
+            if viewModel.selectedMembers.isEmpty {
+                Button {
+                    viewModel.showMemberSelection = true
+                } label: {
+                    HStack {
+                        Text("Select People")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .padding()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(viewModel.selectedMembers) { member in
+                        HStack(spacing: 12) {
+                            // Avatar with initials
+                            Text(member.avatarInitials)
+                                .font(.system(size: 14, weight: FontTokens.medium))
+                                .foregroundColor(.blue)
+                                .frame(width: 32, height: 32)
+                                .background(Color(red: 0.9, green: 0.93, blue: 0.98))
+                                .clipShape(Circle())
+                            
+                            Text(member.fullName ?? "Unknown")
+                                .font(.body)
+                            
+                            // Show "(Me)" for current user
+                            if let memberId = member.id, memberId == currentUserID {
+                                Text("(Me)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            // Remove button (don't show for current user)
+                            if let memberId = member.id, memberId != currentUserID {
+                                Button {
+                                    viewModel.removeMember(member)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal)
+                        
+                        if let currentMemberId = member.id,
+                           let lastMemberId = viewModel.selectedMembers.last?.id,
+                           currentMemberId != lastMemberId {
+                            Divider()
+                                .padding(.leading, 56)
+                        }
+                    }
+                    
+                    // Add more members button
+                    Button {
+                        viewModel.showMemberSelection = true
+                    } label: {
+                        HStack {
+                            Text("Select People")
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal)
+                    }
+                }
                 .background(Color(.systemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
@@ -163,38 +233,34 @@ struct CreateGroupView: View {
     private var paymentDueDateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Native inset row list style dengan DatePicker - tinggi sama dengan Members section
-            Button {
-                // Tap akan memicu DatePicker
-            } label: {
-                HStack {
-                    // Label di kiri
-                    Text("Payment due date")
-                        .font(.body)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    // Native DatePicker di kanan
-                    DatePicker(
-                        "",
-                        selection: Binding(
-                            get: {
-                                // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
-                                viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
-                            },
-                            set: { newDate in
-                                viewModel.paymentDueDate = newDate
-                            }
-                        ),
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            HStack {
+                // Label di kiri (tidak bisa diklik)
+                Text("Payment due date")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // Native DatePicker di kanan (hanya ini yang bisa diklik)
+                DatePicker(
+                    "",
+                    selection: Binding(
+                        get: {
+                            // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
+                            viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
+                        },
+                        set: { newDate in
+                            viewModel.paymentDueDate = newDate
+                        }
+                    ),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
             }
+            .padding()
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             Text("It's set to 7 days after the last expense by default")
                 .font(.caption)

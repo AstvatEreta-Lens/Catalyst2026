@@ -179,21 +179,13 @@ struct EditGroupView: View {
                 VStack(spacing: 0) {
                     ForEach(viewModel.selectedMembers) { member in
                         HStack(spacing: 12) {
-                            // Avatar
-                            Group {
-                                if let photoData = member.profilePhotoData,
-                                   let uiImage = UIImage(data: photoData) {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                } else {
-                                    Image("placeholder-photoprofile")
-                                        .resizable()
-                                        .scaledToFill()
-                                }
-                            }
-                            .frame(width: 32, height: 32)
-                            .clipShape(Circle())
+                            // Avatar with initials
+                            Text(member.avatarInitials)
+                                .font(.system(size: 14, weight: FontTokens.medium))
+                                .foregroundColor(.blue)
+                                .frame(width: 32, height: 32)
+                                .background(Color(red: 0.9, green: 0.93, blue: 0.98))
+                                .clipShape(Circle())
                             
                             Text(member.fullName ?? "Unknown")
                                 .font(.body)
@@ -255,40 +247,35 @@ struct EditGroupView: View {
     // MARK: - Payment Due Date Section
     private var paymentDueDateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            
             // Native inset row list style dengan DatePicker - tinggi sama dengan Members section
-            Button {
-                // Tap akan memicu DatePicker
-            } label: {
-                HStack {
-                    // Label di kiri
-                    Text("Payment due date")
-                        .font(.body)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    // Native DatePicker di kanan
-                    DatePicker(
-                        "",
-                        selection: Binding(
-                            get: {
-                                // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
-                                viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
-                            },
-                            set: { newDate in
-                                viewModel.paymentDueDate = newDate
-                            }
-                        ),
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            HStack {
+                // Label di kiri (tidak bisa diklik)
+                Text("Payment due date")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // Native DatePicker di kanan (hanya ini yang bisa diklik)
+                DatePicker(
+                    "",
+                    selection: Binding(
+                        get: {
+                            // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
+                            viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
+                        },
+                        set: { newDate in
+                            viewModel.paymentDueDate = newDate
+                        }
+                    ),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
             }
+            .padding()
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             Text("It's set to 7 days after the last expense by default")
                 .font(.caption)

@@ -5,6 +5,8 @@
 //  Created by Ahmad Al Wabil on 16/01/26.
 //
 
+//Harusnya ini gak kepake, karena view nya ada yang sudah lebih rapih, dan ada 3 segmented controls: summary, expeneses, dan members, dengan fungsi untuk share invoice juga. So, ini gak kepake.
+
 import SwiftUI
 import SwiftData
 
