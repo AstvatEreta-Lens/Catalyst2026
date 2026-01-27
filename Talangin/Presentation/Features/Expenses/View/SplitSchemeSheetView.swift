@@ -26,6 +26,9 @@ struct SplitSchemeSheetView: View {
             ZStack(alignment: .bottom) {
                 Color(uiColor: .secondarySystemBackground)
                     .ignoresSafeArea()
+                    .onTapGesture {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
                 
                 ScrollView {
                     VStack(spacing: 20) {

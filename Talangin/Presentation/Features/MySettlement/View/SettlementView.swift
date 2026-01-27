@@ -13,7 +13,7 @@ struct SettlementView: View {
     let expenses: [ExpenseEntity]
     let allMembers: [FriendEntity]
     
-    @State private var selectedSegment: SettlementSegment = .active
+    @State private var selectedSegment: SettlementSegment = .debt
     @State private var expandedTransactions: Set<UUID> = []
     @State private var selectedFilter = "All"
     @State private var paySheetIsPresented: Bool = false
@@ -95,9 +95,6 @@ struct SettlementView: View {
                                 .buttonStyle(PlainButtonStyle())
                             }
                         }
-                    } else {
-                        ProgressView()
-                            .padding(.top, 60)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -107,38 +104,6 @@ struct SettlementView: View {
             }
         }
         .navigationTitle(member?.fullName ?? "My Settlement")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        selectedFilter = "All"
-                    } label: {
-                        Label("All", systemImage: "list.bullet")
-                    }
-                    Button {
-                        selectedFilter = "Need To Pay"
-                    } label: {
-                        Label("Need to pay", systemImage: "arrow.up.right")
-                    }
-                    Button {
-                        selectedFilter = "Will Receive"
-                    } label: {
-                        Label("Will Receive", systemImage: "arrow.down.left")
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(selectedFilter)
-                            .font(.system(size: 14, weight: .medium))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 12, weight: .bold))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .foregroundStyle(.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-            }
-        }
         .onAppear {
             calculateSettlement()
         }
@@ -170,7 +135,7 @@ struct SettlementView: View {
         
         // Filter by segment (Active/Done)
         return transactions.filter { transaction in
-            selectedSegment == .active ? !transaction.isPaid : transaction.isPaid
+            selectedSegment == .debt ? !transaction.isPaid : transaction.isPaid
         }
     }
     
@@ -181,8 +146,10 @@ struct SettlementView: View {
 
 // Enum Anda
 enum SettlementSegment: String, CaseIterable {
-    case active = "Active"
+    case debt = "Debt"
+    case receivable = "Receivable"
     case done = "Done"
+    
 }
 
 #Preview {

@@ -2,8 +2,6 @@
 //  ShareSheet.swift
 //  Talangin
 //
-//  Created by System on 26/01/26.
-//
 
 import SwiftUI
 import UIKit
@@ -11,10 +9,12 @@ import UIKit
 struct ShareSheet: UIViewControllerRepresentable {
     var items: [Any]
     var excludedActivityTypes: [UIActivity.ActivityType]? = nil
+    var completionHandler: UIActivityViewController.CompletionWithItemsHandler? = nil
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
         controller.excludedActivityTypes = excludedActivityTypes
+        controller.completionWithItemsHandler = completionHandler
         return controller
     }
 

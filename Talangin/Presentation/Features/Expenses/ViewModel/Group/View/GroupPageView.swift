@@ -60,9 +60,13 @@ struct GroupPageView: View {
         .sheet(isPresented: $viewModel.isEditingName) {
             EditGroupNameSheet(viewModel: viewModel)
         }
-        .sheet(isPresented: $showShareSheet) {
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            invoiceFileURL = nil
+        }) {
             if let url = invoiceFileURL {
-                ShareSheet(items: [url])
+                ShareSheet(items: [url]) { _, _, _, _ in
+                    showShareSheet = false
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -112,13 +116,17 @@ private extension GroupPageView {
                 Button {
                     Task {
                         // Generate Invoice PDF
-                        if let url = await InvoiceGenerator.generateInvoicePDF(
+                        let url = await InvoiceGenerator.generateInvoicePDF(
                             group: viewModel.group,
                             members: viewModel.members,
                             expenses: viewModel.expenses
-                        ) {
-                            invoiceFileURL = url
-                            showShareSheet = true
+                        )
+                        
+                        await MainActor.run {
+                            if let url = url {
+                                invoiceFileURL = url
+                                showShareSheet = true
+                            }
                         }
                     }
                 } label: {

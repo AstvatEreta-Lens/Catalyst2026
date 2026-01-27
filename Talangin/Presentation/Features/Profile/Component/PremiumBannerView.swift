@@ -21,20 +21,29 @@ struct PremiumBannerView: View {
     var body: some View {
         ZStack(alignment: .leading) {
             // MARK: - Background with gradient
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [gradientStart, gradientEnd],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+//            RoundedRectangle(cornerRadius: 16)
+//                .fill(
+//                    LinearGradient(
+//                        colors: [gradientStart, gradientEnd],
+//                        startPoint: .leading,
+//                        endPoint: .trailing
+//                    )
+//                )
+            // MARK: - Premium Image
+            Image("premiumImage2")
+                .resizable()
+                .scaledToFill()
+//                .frame(width: 160, height: 150)
+                .clipped()
+                .clipShape(
+                    RoundedCorner(radius: 16, corners: [.topRight, .bottomRight])
                 )
             
             HStack(spacing: 0) {
                 // MARK: - Text Content
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("Enjoy Our Premium\nFeatures")
-                        .font(.system(size: FontTokens.Title3.size, weight: FontTokens.bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(titleColor)
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
@@ -43,35 +52,28 @@ struct PremiumBannerView: View {
                         onUpgradeTapped()
                     } label: {
                         Text("Upgrade Now")
-                            .font(.system(size: 14, weight: FontTokens.semiBold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(buttonTextColor)
                             .padding(.horizontal, AppSpacing.lg)
                             .padding(.vertical, 12)
                             .background(
-                                Capsule()
-                                    .fill(Color.white)
-                                    .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
-                            )
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(AppColors.backgroundPrimary)
+                                    )
+                    
+                            
                     }
                 }
                 .padding(.leading, AppSpacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                // MARK: - Premium Image
-                Image("premiumImage2")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 160, height: 150)
-                    .clipped()
-                    .clipShape(
-                        RoundedCorner(radius: 16, corners: [.topRight, .bottomRight])
-                    )
+                
             }
         }
         .frame(height: 150)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.md)
+//        .padding(.vertical, AppSpacing.md)
     }
 }
 
@@ -94,4 +96,5 @@ struct RoundedCorner: Shape {
     PremiumBannerView(onUpgradeTapped: {
         print("Upgrade tapped (preview)")
     })
+    .background(Color.red.opacity(0.3))
 }

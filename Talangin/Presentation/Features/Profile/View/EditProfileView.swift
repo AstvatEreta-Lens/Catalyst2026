@@ -35,6 +35,9 @@ struct EditProfileView: View {
             // MARK: - Background Color
             Color(uiColor: .systemGroupedBackground)
                 .ignoresSafeArea()
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
 
             VStack(spacing: 0) {
                 // MARK: - Header Section

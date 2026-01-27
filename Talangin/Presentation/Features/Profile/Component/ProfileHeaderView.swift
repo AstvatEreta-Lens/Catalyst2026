@@ -56,27 +56,26 @@ struct ProfileHeaderView: View {
             }
 
             // MARK: - Name and Email
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                HStack(spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+         
                     Text(fullName.isEmpty ? "John Doe" : fullName)
                         .font(.Headline)
                         .fontWeight(.semibold)
 
-                    Text(accountBadge)
-                        .font(.Caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(accountBadge == "Premium" ? .white : Color(red: 0.20, green: 0.45, blue: 0.80))
-                        .padding(.horizontal, AppSpacing.xs)
-                        .padding(.vertical, AppSpacing.xxs)
-                        .background(
-                            Capsule()
-                                .fill(accountBadge == "Premium" ? AppColors.badgePremium : Color(red: 0.85, green: 0.94, blue: 0.99))
-                        )
-                }
-
                 Text(email.isEmpty ? "john.doe@gmail.com" : email)
                     .font(.Subheadline)
                     .foregroundColor(.secondary)
+                
+                Text(accountBadge)
+                    .font(.Caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(accountBadge == "Premium" ? .white : Color(red: 0.20, green: 0.45, blue: 0.80))
+                    .padding(.horizontal, AppSpacing.xs)
+                    .padding(.vertical, AppSpacing.xxs)
+                    .background(
+                        Capsule()
+                            .fill(accountBadge == "Premium" ? AppColors.badgePremium : Color(red: 0.85, green: 0.94, blue: 0.99))
+                    )
             }
 
             Spacer()
@@ -85,14 +84,13 @@ struct ProfileHeaderView: View {
             Button {
                 onEditTapped()
             } label: {
-                Image(systemName: "pencil")
-                    .font(.system(size: 16, weight: .medium))
+                Image(systemName: "pencil.circle.fill")
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.top, 50)
-        .frame(minHeight: 200)
+//        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.md)
         .background(Color(.systemBackground))
     }
 }

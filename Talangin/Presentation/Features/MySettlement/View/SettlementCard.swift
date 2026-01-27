@@ -18,7 +18,7 @@ struct SettlementCard: View {
     init(
         title: String = "Need to Pay",
         amount: Double = 30000,
-        status: String = "Unpaid",
+        status: String = "Pay",
         statusColor: Color = .red,
         personName: String = "Chikmah",
         personInitials: String = "CH"

@@ -18,7 +18,7 @@ final class AddNewExpenseViewModel: ObservableObject {
     // MARK: - Input State
     @Published var title: String = ""
     @Published var totalPrice: String = ""
-    @Published var splitResult: SplitResult = .none
+    @Published var splitResult: SplitResult = .equally
     
     // MARK: - Selection State
     @Published var selectedFriends: [FriendEntity] = []

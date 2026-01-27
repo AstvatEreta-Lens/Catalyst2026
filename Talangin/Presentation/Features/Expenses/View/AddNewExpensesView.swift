@@ -20,19 +20,22 @@ struct AddNewExpenseView: View {
         NavigationStack {
                 ScrollView{
                     ZStack(alignment: .top) {
-                    headerSection
-                  
-                    VStack(spacing: 24) {
-                        mainCard
-                        splitWithSection
-                        splitTypeSection
+                        headerSection
+                      
+                        VStack(spacing: 24) {
+                            mainCard
+                            splitWithSection
+                            splitTypeSection
+                        }
+                        .padding(.top, 160)
+                        .padding(.horizontal)
+                        .padding(.bottom, 30)
                     }
-                    .padding(.top, 160)
-                    .padding(.horizontal)
-                    .padding(.bottom, 30)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
                 }
-                
-            }
             .ignoresSafeArea()
             .navigationBarHidden(true)
             .onAppear {
