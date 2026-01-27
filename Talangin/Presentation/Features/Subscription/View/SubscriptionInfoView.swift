@@ -24,6 +24,32 @@
 //  - Validate receipts server-side for security
 //
 
+//
+//  SubscriptionInfoView.swift
+//  Talangin
+//
+//  Created by Rifqi Rahman on 19/01/26.
+//
+//  Subscription info view showing current plan, features, and management actions.
+//  Displays subscription details for premium users.
+//
+//  BACKEND DEVELOPER NOTES:
+//  -------------------------
+//  This view displays the user's current subscription status.
+//
+//  StoreKit Integration:
+//  1. Fetch subscription status from StoreKit/server
+//  2. Display actual subscription expiration date
+//  3. Handle subscription management (Apple's subscription management)
+//  4. Implement restore purchases with proper validation
+//  5. Handle promo code redemption
+//
+//  Suggested implementation:
+//  - Use Transaction.currentEntitlements for active subscriptions
+//  - Open App Store subscription management via URL scheme
+//  - Validate receipts server-side for security
+//
+
 import SwiftUI
 
 struct SubscriptionInfoView: View {
@@ -398,7 +424,7 @@ private struct PromoCodeSheet: View {
             .navigationTitle("Promo Code")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
