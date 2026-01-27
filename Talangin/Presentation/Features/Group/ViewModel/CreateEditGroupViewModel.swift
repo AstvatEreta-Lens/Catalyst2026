@@ -23,7 +23,6 @@ final class CreateEditGroupViewModel: ObservableObject {
     @Published var paymentDueDate: Date?
     @Published var showMemberSelection = false
     @Published var showProfilePictureSheet = false
-    @Published var showDatePicker = false
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showError = false
@@ -35,7 +34,7 @@ final class CreateEditGroupViewModel: ObservableObject {
     @Published var searchText: String = ""
     
     // MARK: - Dependencies
-    private let modelContext: ModelContext
+    let modelContext: ModelContext
     private lazy var groupRepository: GroupRepository = {
         GroupRepository(modelContext: modelContext)
     }()
@@ -63,7 +62,7 @@ final class CreateEditGroupViewModel: ObservableObject {
         if let date = paymentDueDate {
             return date.formatted("dd MMMM yyyy")
         }
-        return "Select target date for payment"
+        return "Due date for payment"
     }
     
     var membersText: String {

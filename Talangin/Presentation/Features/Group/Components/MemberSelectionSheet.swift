@@ -5,7 +5,7 @@
 //  Created by Rifqi Rahman on 27/01/26.
 //
 //  Sheet for selecting group members from friends list.
-//  Supports search functionality and displays selected members at the top.
+//  Reuses view structure and logic from BeneficiarySelectionSheet.
 //
 
 import SwiftUI
@@ -14,7 +14,16 @@ import UIKit
 
 struct MemberSelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: CreateEditGroupViewModel
+    @State private var viewModel: MemberSelectionViewModel
+    let onDone: ([FriendEntity]) -> Void
+    
+    init(modelContext: ModelContext, initialSelectedMembers: [FriendEntity] = [], onDone: @escaping ([FriendEntity]) -> Void) {
+        self.onDone = onDone
+        _viewModel = State(initialValue: MemberSelectionViewModel(
+            modelContext: modelContext,
+            initialSelectedMembers: initialSelectedMembers
+        ))
+    }
     
     var body: some View {
         NavigationStack {
@@ -24,7 +33,7 @@ struct MemberSelectionSheet: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        if !viewModel.selectedMembers.isEmpty {
+                        if !viewModel.allSelectedMembers.isEmpty {
                             selectedMembersCard
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
@@ -34,8 +43,6 @@ struct MemberSelectionSheet: View {
                     .padding(.top, 12)
                     .padding(.bottom, 100)
                 }
-                
-                footerView
             }
             .navigationTitle("Members")
             .navigationBarTitleDisplayMode(.inline)
@@ -45,20 +52,22 @@ struct MemberSelectionSheet: View {
                 prompt: "Search name"
             )
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        let selectedFriends = viewModel.getSelectedFriends()
+                        onDone(selectedFriends)
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
             }
-            .animation(.default, value: viewModel.selectedMembers)
+            .animation(.default, value: viewModel.allSelectedMembers)
         }
     }
     
@@ -67,39 +76,32 @@ struct MemberSelectionSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
-                    ForEach(viewModel.selectedMembers) { member in
+                    ForEach(viewModel.allSelectedMembers) { member in
                         VStack(spacing: 8) {
                             ZStack(alignment: .topTrailing) {
-                                // Avatar
-                                Group {
-                                    if let photoData = member.profilePhotoData,
-                                       let uiImage = UIImage(data: photoData) {
-                                        Image(uiImage: uiImage)
-                                            .resizable()
-                                            .scaledToFill()
-                                    } else {
-                                        Text(member.avatarInitials)
-                                            .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-                                .frame(width: 56, height: 56)
-                                .background(Color(red: 0.9, green: 0.93, blue: 0.98))
-                                .clipShape(Circle())
+                                // Avatar with initials (like BeneficiarySelectionSheet)
+                                Text(member.initials)
+                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
+                                    .foregroundColor(.blue)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color(red: 0.9, green: 0.93, blue: 0.98))
+                                    .clipShape(Circle())
                                 
                                 // Remove button
-                                Button {
-                                    viewModel.removeMember(member)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.gray)
-                                        .background(Circle().fill(Color.white))
-                                        .font(.system(size: 20))
+                                if let friend = viewModel.friends.first(where: { $0.id == member.id }) {
+                                    Button {
+                                        viewModel.removeFriend(friend)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.gray)
+                                            .background(Circle().fill(Color.white))
+                                            .font(.system(size: 20))
+                                    }
+                                    .offset(x: 8, y: -8)
                                 }
-                                .offset(x: 8, y: -8)
                             }
                             
-                            Text(member.fullName ?? "Unknown")
+                            Text(member.name)
                                 .font(.caption)
                                 .lineLimit(1)
                                 .frame(width: 60)
@@ -119,34 +121,43 @@ struct MemberSelectionSheet: View {
     // MARK: - Recent Friends Section
     private var recentFriendsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Friends")
+            Text("Friends")
                 .font(.headline)
                 .padding(.horizontal)
             
             VStack(spacing: 0) {
-                // Add New Friend Row
-                Button {
-                    // TODO: Navigate to Add Friend
-                } label: {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Text("Add New Friend")
-                            .font(.body)
-                            .foregroundColor(.gray.opacity(0.6))
-                        
-                        Spacer()
+                // Add New Friend TextField
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.gray)
                     }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal)
+                    
+                    TextField("Add New Friend", text: $viewModel.newFriendName)
+                        .font(.body)
+                        .foregroundColor(.gray.opacity(0.6))
+                        .submitLabel(.done)
+                        .onSubmit {
+                            viewModel.createNewFriend()
+                        }
+                    
+                    // Submit button (appears when text is not empty)
+                    if !viewModel.newFriendName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Button {
+                            viewModel.createNewFriend()
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.blue)
+                        }
+                    }
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal)
                 
                 Divider()
                     .padding(.leading, 60)
@@ -166,32 +177,25 @@ struct MemberSelectionSheet: View {
             .padding(.horizontal)
         }
     }
-    
-    // MARK: - Friend Row
-    private func friendRow(_ friend: FriendEntity) -> some View {
+}
+
+// MARK: - Private Extension
+private extension MemberSelectionSheet {
+    func friendRow(_ friend: FriendEntity) -> some View {
         HStack(spacing: 16) {
             Button {
-                viewModel.toggleMemberSelection(friend)
+                viewModel.toggleFriendSelection(friend)
             } label: {
-                selectionCheckbox(isSelected: viewModel.isMemberSelected(friend))
+                selectionCheckbox(isSelected: viewModel.isFriendSelected(friend))
             }
             
-            // Avatar
-            Group {
-                if let photoData = friend.profilePhotoData,
-                   let uiImage = UIImage(data: photoData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Text(friend.avatarInitials)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.blue)
-                }
-            }
-            .frame(width: 32, height: 32)
-            .background(Color(red: 0.9, green: 0.93, blue: 0.98))
-            .clipShape(Circle())
+            // Avatar with initials (like BeneficiarySelectionSheet)
+            Text(friend.avatarInitials)
+                .font(.system(size: 14, weight: FontTokens.medium))
+                .foregroundColor(.blue)
+                .frame(width: 32, height: 32)
+                .background(Color(red: 0.9, green: 0.93, blue: 0.98))
+                .clipShape(Circle())
             
             Text(friend.fullName ?? "Unknown")
                 .font(.body)
@@ -203,8 +207,7 @@ struct MemberSelectionSheet: View {
         .padding(.horizontal)
     }
     
-    // MARK: - Selection Checkbox
-    private func selectionCheckbox(isSelected: Bool) -> some View {
+    func selectionCheckbox(isSelected: Bool) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color(red: 0.2, green: 0.78, blue: 0.35) : Color.clear)
@@ -221,16 +224,6 @@ struct MemberSelectionSheet: View {
             }
         }
     }
-    
-    // MARK: - Footer View
-    private var footerView: some View {
-        VStack {
-            Spacer()
-            Color.white
-                .frame(height: 100)
-                .ignoresSafeArea()
-        }
-    }
 }
 
 #Preview {
@@ -240,7 +233,10 @@ struct MemberSelectionSheet: View {
         UserEntity.self,
         ExpenseEntity.self,
         ExpenseItemEntity.self,
-        SplitParticipantEntity.self
+        SplitParticipantEntity.self,
+        ContactEntity.self,
+        ContactPaymentMethod.self,
+        PaymentMethodEntity.self
     ])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     
@@ -257,10 +253,13 @@ struct MemberSelectionSheet: View {
     context.insert(friend2)
     
     return NavigationStack {
-        MemberSelectionSheet(viewModel: CreateEditGroupViewModel(
+        MemberSelectionSheet(
             modelContext: context,
-            currentUserID: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
-        ))
+            initialSelectedMembers: [friend1],
+            onDone: { selectedFriends in
+                print("Selected friends: \(selectedFriends.count)")
+            }
+        )
     }
     .modelContainer(container)
 }

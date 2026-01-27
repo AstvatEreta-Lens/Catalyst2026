@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct MemberSummaryCardView: View {
     let member: FriendEntity
@@ -16,13 +17,20 @@ struct MemberSummaryCardView: View {
     var body: some View {
         VStack(spacing: 20) {
             HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Color(uiColor: .systemGray6))
-                        .frame(width: 44, height: 44)
-                    Text(member.avatarInitials)
-                        .font(.system(size: 14, weight: .bold))
+                Group {
+                    if let photoData = member.profilePhotoData,
+                       let uiImage = UIImage(data: photoData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Image("placeholder-photoprofile")
+                            .resizable()
+                            .scaledToFill()
+                    }
                 }
+                .frame(width: 44, height: 44)
+                .clipShape(Circle())
                 
                 Text("\(member.fullName ?? "Unknown")\(member.id == currentUserID ? " (Me)" : "")")
                     .font(.system(size: 18, weight: .bold))

@@ -96,15 +96,11 @@ struct GroupMembersTab: View {
                                 .frame(width: 44, height: 44)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         } else {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(uiColor: .secondarySystemBackground))
-                                    .frame(width: 44, height: 44)
-                                
-                                Text(member.avatarInitials)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(Color(red: 0.17, green: 0.28, blue: 0.7))
-                            }
+                            Image("placeholder-photoprofile")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         
                         Text("\(member.fullName ?? "Unknown")\(member.id == viewModel.currentUserID ? " (Me)" : "")")

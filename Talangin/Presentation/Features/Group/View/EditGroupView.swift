@@ -75,7 +75,13 @@ struct EditGroupView: View {
                 }
             }
             .sheet(isPresented: $viewModel.showMemberSelection) {
-                MemberSelectionSheet(viewModel: viewModel)
+                MemberSelectionSheet(
+                    modelContext: viewModel.modelContext,
+                    initialSelectedMembers: viewModel.selectedMembers,
+                    onDone: { selectedFriends in
+                        viewModel.selectedMembers = selectedFriends
+                    }
+                )
             }
             .sheet(isPresented: $viewModel.showProfilePictureSheet) {
                 ProfilePictureActionSheet(
@@ -84,9 +90,6 @@ struct EditGroupView: View {
                 )
                 .presentationDetents([.fraction(0.33)])
                 .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $viewModel.showDatePicker) {
-                DatePickerSheet(selectedDate: $viewModel.paymentDueDate)
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) {}
@@ -116,13 +119,9 @@ struct EditGroupView: View {
                             .resizable()
                             .scaledToFill()
                     } else {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.gray.opacity(0.1))
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.gray)
-                        }
+                        Image("placeholder-groupphoto")
+                            .resizable()
+                            .scaledToFill()
                     }
                 }
                 .frame(width: 80, height: 80)
@@ -132,7 +131,7 @@ struct EditGroupView: View {
             // Group Name TextField
             HStack {
                 TextField("Group Name", text: $viewModel.groupName)
-                    .font(.title3)
+                    .font(.body)
                     .textFieldStyle(.plain)
                 
                 if !viewModel.groupName.isEmpty {
@@ -163,6 +162,7 @@ struct EditGroupView: View {
                 } label: {
                     HStack {
                         Text(viewModel.membersText)
+                            .font(.body)
                             .foregroundColor(.secondary)
                         
                         Spacer()
@@ -187,13 +187,12 @@ struct EditGroupView: View {
                                         .resizable()
                                         .scaledToFill()
                                 } else {
-                                    Text(member.avatarInitials)
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.blue)
+                                    Image("placeholder-photoprofile")
+                                        .resizable()
+                                        .scaledToFill()
                                 }
                             }
                             .frame(width: 32, height: 32)
-                            .background(Color(red: 0.9, green: 0.93, blue: 0.98))
                             .clipShape(Circle())
                             
                             Text(member.fullName ?? "Unknown")
@@ -256,22 +255,35 @@ struct EditGroupView: View {
     // MARK: - Payment Due Date Section
     private var paymentDueDateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Payment Due Date")
-                .font(.headline)
-                .foregroundColor(.primary)
             
+            // Native inset row list style dengan DatePicker - tinggi sama dengan Members section
             Button {
-                viewModel.showDatePicker = true
+                // Tap akan memicu DatePicker
             } label: {
                 HStack {
-                    Text(viewModel.paymentDueDateText)
-                        .foregroundColor(viewModel.paymentDueDate == nil ? .secondary : .primary)
+                    // Label di kiri
+                    Text("Payment due date")
+                        .font(.body)
+                        .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    Image(systemName: "calendar")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                    // Native DatePicker di kanan
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: {
+                                // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
+                                viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
+                            },
+                            set: { newDate in
+                                viewModel.paymentDueDate = newDate
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
                 }
                 .padding()
                 .background(Color(.systemBackground))
@@ -286,30 +298,109 @@ struct EditGroupView: View {
 }
 
 #Preview {
+    // Use the same schema as the main app to ensure consistency
     let schema = Schema([
+        UserEntity.self,
+        PaymentMethodEntity.self,
+        ExpenseEntity.self,
         GroupEntity.self,
         FriendEntity.self,
-        UserEntity.self,
-        ExpenseEntity.self,
+        SplitParticipantEntity.self,
         ExpenseItemEntity.self,
-        SplitParticipantEntity.self
+        ContactEntity.self,
+        ContactPaymentMethod.self
     ])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     
-    guard let container = try? ModelContainer(for: schema, configurations: [config]) else {
-        return Text("Failed to create preview container")
-    }
-    
-    let context = container.mainContext
-    let group = GroupEntity(name: "Test Group")
-    context.insert(group)
-    
-    return NavigationStack {
-        EditGroupView(
-            group: group,
-            currentUserID: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID(),
-            modelContext: context
+    do {
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = container.mainContext
+        let currentUserID = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
+        
+        // Create dummy friends similar to BeneficiarySelectionViewModel
+        let friend1 = FriendEntity(userId: "user1", fullName: "Budi")
+        friend1.id = UUID(uuidString: "00000000-0000-0000-0000-000000000002") ?? UUID()
+        context.insert(friend1)
+        
+        let friend2 = FriendEntity(userId: "user2", fullName: "Santoso")
+        friend2.id = UUID(uuidString: "00000000-0000-0000-0000-000000000003") ?? UUID()
+        context.insert(friend2)
+        
+        let friend3 = FriendEntity(userId: "user3", fullName: "Ria")
+        friend3.id = UUID(uuidString: "00000000-0000-0000-0000-000000000004") ?? UUID()
+        context.insert(friend3)
+        
+        let friend4 = FriendEntity(userId: "user4", fullName: "Ahmad Luthfi")
+        friend4.id = UUID(uuidString: "00000000-0000-0000-0000-000000000005") ?? UUID()
+        context.insert(friend4)
+        
+        let friend5 = FriendEntity(userId: "user5", fullName: "Rudi Qomarudin")
+        friend5.id = UUID(uuidString: "00000000-0000-0000-0000-000000000006") ?? UUID()
+        context.insert(friend5)
+        
+        // Create additional friends for "many members" state
+        let friend6 = FriendEntity(userId: "user6", fullName: "John Dioe")
+        friend6.id = UUID(uuidString: "00000000-0000-0000-0000-000000000007") ?? UUID()
+        context.insert(friend6)
+        
+        let friend7 = FriendEntity(userId: "user7", fullName: "Andi Sandika")
+        friend7.id = UUID(uuidString: "00000000-0000-0000-0000-000000000008") ?? UUID()
+        context.insert(friend7)
+        
+        let friend8 = FriendEntity(userId: "user8", fullName: "Sari Yulia")
+        friend8.id = UUID(uuidString: "00000000-0000-0000-0000-000000000009") ?? UUID()
+        context.insert(friend8)
+        
+        // Create group with multiple members and payment due date
+        let group = GroupEntity(name: "Talangin")
+        group.id = UUID(uuidString: "00000000-0000-0000-0000-000000000010") ?? UUID()
+        group.paymentDueDate = Calendar.current.date(byAdding: .day, value: 7, to: Date())
+        // Add many members to show "many members" state
+        group.members = [friend1, friend2, friend3, friend4, friend5, friend6, friend7, friend8]
+        group.createdAt = Calendar.current.date(byAdding: .day, value: -30, to: Date())
+        group.updatedAt = Date()
+        context.insert(group)
+        
+        // Create some expenses for the group
+        let expense1 = ExpenseEntity(
+            title: "Dinner at Restaurant",
+            totalAmount: 250000,
+            createdAt: Calendar.current.date(byAdding: .day, value: -5, to: Date()) ?? Date(),
+            splitMethodRaw: "equal",
+            group: group
         )
+        expense1.id = UUID()
+        context.insert(expense1)
+        
+        let expense2 = ExpenseEntity(
+            title: "Movie Tickets",
+            totalAmount: 120000,
+            createdAt: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(),
+            splitMethodRaw: "equal",
+            group: group
+        )
+        expense2.id = UUID()
+        context.insert(expense2)
+        
+        // Save context
+        try context.save()
+        
+        return NavigationStack {
+            EditGroupView(
+                group: group,
+                currentUserID: currentUserID,
+                modelContext: context
+            )
+        }
+        .modelContainer(container)
+    } catch {
+        return VStack {
+            Text("Preview Error")
+                .font(.headline)
+            Text(error.localizedDescription)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding()
+        }
     }
-    .modelContainer(container)
 }

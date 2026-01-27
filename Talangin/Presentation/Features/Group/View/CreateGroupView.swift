@@ -70,7 +70,13 @@ struct CreateGroupView: View {
                 }
             }
             .sheet(isPresented: $viewModel.showMemberSelection) {
-                MemberSelectionSheet(viewModel: viewModel)
+                MemberSelectionSheet(
+                    modelContext: viewModel.modelContext,
+                    initialSelectedMembers: viewModel.selectedMembers,
+                    onDone: { selectedFriends in
+                        viewModel.selectedMembers = selectedFriends
+                    }
+                )
             }
             .sheet(isPresented: $viewModel.showProfilePictureSheet) {
                 ProfilePictureActionSheet(
@@ -79,9 +85,6 @@ struct CreateGroupView: View {
                 )
                 .presentationDetents([.fraction(0.33)])
                 .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $viewModel.showDatePicker) {
-                DatePickerSheet(selectedDate: $viewModel.paymentDueDate)
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) {}
@@ -109,13 +112,9 @@ struct CreateGroupView: View {
                             .resizable()
                             .scaledToFill()
                     } else {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.gray.opacity(0.1))
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.gray)
-                        }
+                        Image("placeholder-groupphoto")
+                            .resizable()
+                            .scaledToFill()
                     }
                 }
                 .frame(width: 80, height: 80)
@@ -124,7 +123,7 @@ struct CreateGroupView: View {
             
             // Group Name TextField
             TextField("Group Name", text: $viewModel.groupName)
-                .font(.title3)
+                .font(.body)
                 .textFieldStyle(.plain)
                 .padding()
                 .background(Color(.systemBackground))
@@ -144,6 +143,7 @@ struct CreateGroupView: View {
             } label: {
                 HStack {
                     Text(viewModel.membersText)
+                        .font(.body)
                         .foregroundColor(viewModel.selectedMembers.isEmpty ? .secondary : .primary)
                     
                     Spacer()
@@ -162,22 +162,34 @@ struct CreateGroupView: View {
     // MARK: - Payment Due Date Section
     private var paymentDueDateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Payment Due Date")
-                .font(.headline)
-                .foregroundColor(.primary)
-            
+            // Native inset row list style dengan DatePicker - tinggi sama dengan Members section
             Button {
-                viewModel.showDatePicker = true
+                // Tap akan memicu DatePicker
             } label: {
                 HStack {
-                    Text(viewModel.paymentDueDateText)
-                        .foregroundColor(viewModel.paymentDueDate == nil ? .secondary : .primary)
+                    // Label di kiri
+                    Text("Payment due date")
+                        .font(.body)
+                        .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    Image(systemName: "calendar")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                    // Native DatePicker di kanan
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: {
+                                // Gunakan tanggal yang ada, atau hitung default dari last expense, atau 7 hari dari sekarang
+                                viewModel.paymentDueDate ?? viewModel.calculateDefaultPaymentDueDate()
+                            },
+                            set: { newDate in
+                                viewModel.paymentDueDate = newDate
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
                 }
                 .padding()
                 .background(Color(.systemBackground))
@@ -188,54 +200,6 @@ struct CreateGroupView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-    }
-}
-
-// MARK: - Date Picker Sheet
-struct DatePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var selectedDate: Date?
-    @State private var tempDate: Date
-    
-    init(selectedDate: Binding<Date?>) {
-        self._selectedDate = selectedDate
-        self._tempDate = State(initialValue: selectedDate.wrappedValue ?? Date())
-    }
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                DatePicker(
-                    "Select Date",
-                    selection: $tempDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Payment Due Date")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        selectedDate = tempDate
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
     }
 }
 
@@ -260,6 +224,30 @@ struct DatePickerSheet: View {
         let container = try ModelContainer(for: schema, configurations: [config])
         let context = container.mainContext
         let currentUserID = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
+        
+        // Create dummy friends similar to BeneficiarySelectionViewModel
+        let friend1 = FriendEntity(userId: "user1", fullName: "Budi")
+        friend1.id = UUID(uuidString: "00000000-0000-0000-0000-000000000002") ?? UUID()
+        context.insert(friend1)
+        
+        let friend2 = FriendEntity(userId: "user2", fullName: "Santoso")
+        friend2.id = UUID(uuidString: "00000000-0000-0000-0000-000000000003") ?? UUID()
+        context.insert(friend2)
+        
+        let friend3 = FriendEntity(userId: "user3", fullName: "Ria")
+        friend3.id = UUID(uuidString: "00000000-0000-0000-0000-000000000004") ?? UUID()
+        context.insert(friend3)
+        
+        let friend4 = FriendEntity(userId: "user4", fullName: "Ahmad Luthfi")
+        friend4.id = UUID(uuidString: "00000000-0000-0000-0000-000000000005") ?? UUID()
+        context.insert(friend4)
+        
+        let friend5 = FriendEntity(userId: "user5", fullName: "Rudi Qomarudin")
+        friend5.id = UUID(uuidString: "00000000-0000-0000-0000-000000000006") ?? UUID()
+        context.insert(friend5)
+        
+        // Save context
+        try context.save()
         
         return NavigationStack {
             CreateGroupView(
