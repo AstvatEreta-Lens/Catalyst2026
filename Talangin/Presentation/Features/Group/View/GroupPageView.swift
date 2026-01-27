@@ -12,8 +12,12 @@ struct GroupPageView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: GroupPageViewModel
+    @State private var showEditGroup = false
+    
+    let currentUserID: UUID
     
     init(group: GroupEntity, currentUserID: UUID, modelContext: ModelContext) {
+        self.currentUserID = currentUserID
         _viewModel = StateObject(wrappedValue: GroupPageViewModel(
             group: group,
             currentUserID: currentUserID,
@@ -57,6 +61,13 @@ struct GroupPageView: View {
         }
         .sheet(isPresented: $viewModel.isEditingName) {
             EditGroupNameSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEditGroup) {
+            EditGroupView(
+                group: viewModel.group,
+                currentUserID: currentUserID,
+                modelContext: modelContext
+            )
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -102,6 +113,12 @@ private extension GroupPageView {
             }
             
             Menu {
+                Button {
+                    showEditGroup = true
+                } label: {
+                    Label("Edit Group", systemImage: "pencil")
+                }
+                
                 Button(role: .destructive) {
                     viewModel.showDeleteConfirmation = true
                 } label: {
@@ -140,3 +157,4 @@ private extension GroupPageView {
         }
     }
 }
+

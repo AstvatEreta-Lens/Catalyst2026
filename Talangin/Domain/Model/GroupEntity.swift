@@ -65,6 +65,10 @@ final class GroupEntity {
     @Relationship(deleteRule: .cascade, inverse: \ExpenseEntity.group)
     var expenses: [ExpenseEntity]? = []
     
+    // MARK: - Payment Due Date
+    /// Target date for payment settlement (defaults to 7 days after last expense)
+    var paymentDueDate: Date?
+    
     // MARK: - Metadata
     var createdAt: Date?
     var updatedAt: Date?
@@ -91,7 +95,8 @@ final class GroupEntity {
         groupDescription: String? = nil,
         iconName: String = "person.3.fill",
         iconBackgroundColorHex: String = "#E8F5E9",
-        members: [FriendEntity] = []
+        members: [FriendEntity] = [],
+        paymentDueDate: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -99,6 +104,7 @@ final class GroupEntity {
         self.iconName = iconName
         self.iconBackgroundColorHex = iconBackgroundColorHex
         self.members = members
+        self.paymentDueDate = paymentDueDate
         self.createdAt = .now
         self.updatedAt = .now
     }
