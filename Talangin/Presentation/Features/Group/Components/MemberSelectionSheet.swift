@@ -118,7 +118,7 @@ struct MemberSelectionSheet: View {
         .padding(.horizontal)
     }
     
-    // MARK: - Recent Friends Section
+    // MARK: - Friends Section
     private var recentFriendsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Friends")
@@ -129,12 +129,12 @@ struct MemberSelectionSheet: View {
                 // Add New Friend TextField
                 HStack(spacing: 16) {
                     ZStack {
-                        Circle()
-                            .fill(Color.gray.opacity(0.1))
-                            .frame(width: 32, height: 32)
+//                        Circle()
+//                            .fill(Color.gray.opacity(0.1))
+//                            .frame(width: 32, height: 32)
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
                     }
                     
                     TextField("Add New Friend", text: $viewModel.newFriendName)
@@ -144,17 +144,6 @@ struct MemberSelectionSheet: View {
                         .onSubmit {
                             viewModel.createNewFriend()
                         }
-                    
-                    // Submit button (appears when text is not empty)
-                    if !viewModel.newFriendName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Button {
-                            viewModel.createNewFriend()
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.blue)
-                        }
-                    }
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal)
@@ -181,48 +170,46 @@ struct MemberSelectionSheet: View {
 
 // MARK: - Private Extension
 private extension MemberSelectionSheet {
+    @ViewBuilder
     func friendRow(_ friend: FriendEntity) -> some View {
-        HStack(spacing: 16) {
-            Button {
-                viewModel.toggleFriendSelection(friend)
-            } label: {
-                selectionCheckbox(isSelected: viewModel.isFriendSelected(friend))
+        let isSelected = viewModel.isFriendSelected(friend)
+        
+        Button {
+            viewModel.toggleFriendSelection(friend)
+        } label: {
+            HStack(spacing: 16) {
+                // Avatar with initials and green overlay when selected
+                ZStack {
+                    // Avatar background with initials
+                    Text(friend.avatarInitials)
+                        .font(.system(size: 20, weight: FontTokens.medium))
+                        .foregroundColor(.blue)
+                        .frame(width: 44, height: 44)
+                        .background(Color(red: 0.9, green: 0.93, blue: 0.98))
+                        .clipShape(Circle())
+                    
+                    // Green overlay with checkmark when selected
+                    if isSelected {
+                        Circle()
+                            .fill(Color(red: 0.2, green: 0.78, blue: 0.35).opacity(0.9))
+                            .frame(width: 44, height: 44)
+                        
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                Text(friend.fullName ?? "Unknown")
+                    .font(.body)
+                    .foregroundColor(.black)
+                
+                Spacer()
             }
-            
-            // Avatar with initials (like BeneficiarySelectionSheet)
-            Text(friend.avatarInitials)
-                .font(.system(size: 14, weight: FontTokens.medium))
-                .foregroundColor(.blue)
-                .frame(width: 32, height: 32)
-                .background(Color(red: 0.9, green: 0.93, blue: 0.98))
-                .clipShape(Circle())
-            
-            Text(friend.fullName ?? "Unknown")
-                .font(.body)
-                .foregroundColor(.black)
-            
-            Spacer()
+            .padding(.vertical, 12)
+            .padding(.horizontal)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal)
-    }
-    
-    func selectionCheckbox(isSelected: Bool) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Color(red: 0.2, green: 0.78, blue: 0.35) : Color.clear)
-                .frame(width: 24, height: 24)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 2)
-                )
-            
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
-            }
-        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

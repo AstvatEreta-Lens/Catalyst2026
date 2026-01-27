@@ -65,7 +65,7 @@ struct EditGroupView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
+                    Button("Save") {
                         viewModel.saveGroup {
                             dismiss()
                         }
