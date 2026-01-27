@@ -28,17 +28,15 @@ struct SummaryCardView: View {
                     isPositive: true
                 )
             }
-            .padding(.bottom, 44) // ruang untuk button
+            .padding(.bottom, 44)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .shadow(color: .black.opacity(0.08), radius: 10, y: 6)
 
             // MARK: - Bottom Button
-            Button(action: {
-                print("See details tapped")
-            }) {
+            NavigationLink(destination: SettlementView()) {
                 HStack {
-                    Text("See Details")
+                    Text("Setlement Details")
                         .font(Font.subheadline.bold())
                     Spacer()
 
@@ -75,7 +73,7 @@ struct SummaryCardView: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.secondary)
 
                 HStack {
@@ -83,7 +81,7 @@ struct SummaryCardView: View {
                         .foregroundColor(isPositive ? .green : .red)
 
                     Text(amount.formatted(.currency(code: "IDR")))
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                 }
             }
 

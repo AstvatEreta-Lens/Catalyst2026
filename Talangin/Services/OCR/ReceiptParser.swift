@@ -49,10 +49,11 @@ final class ReceiptParserService {
         let count = min(itemNames.count, prices.count)
         
         let items = (0..<count).map { index in
-            ExpenseItem(
-                itemName: itemNames[index],
-                itemPrice: Double(prices[index]),
-                itemQuantity: index < quantities.count ? quantities[index] : 1
+            let quantity = index < quantities.count ? quantities[index] : 1
+            let totalPrice = Double(prices[index]) * Double(quantity)
+            return ExpenseItem(
+                name: itemNames[index],
+                price: totalPrice
             )
         }
         

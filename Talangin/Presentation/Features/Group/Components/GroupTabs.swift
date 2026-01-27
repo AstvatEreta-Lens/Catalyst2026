@@ -18,7 +18,10 @@ struct GroupSummaryTab: View {
                     member: member,
                     currentUserID: viewModel.currentUserID,
                     youNeedToPay: summary.youNeedToPay,
-                    waitingForPayment: summary.waitingForPayment
+                    waitingForPayment: summary.waitingForPayment,
+                    group: viewModel.group,
+                    expenses: viewModel.expenses,
+                    allMembers: viewModel.members
                 )
             }
         }

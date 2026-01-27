@@ -34,7 +34,7 @@ struct CurrentExpenses: View {
             return allGroups
         } else {
             return allGroups.filter { group in
-                (group.name).localizedCaseInsensitiveContains(searchText)
+                (group.name ?? "untitled group").localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -68,7 +68,7 @@ struct CurrentExpenses: View {
                                     
                                     NavigationLink(destination: PayNowView()) {
                                         ExpensesList(
-                                            item: friend,
+                                            item: friend as! ExpenseDisplayItem,
                                             subtitle: status,
                                             amount: dummyAmount
                                         )

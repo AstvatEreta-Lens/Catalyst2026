@@ -8,35 +8,58 @@
 import SwiftUI
 
 struct SettlementCard: View {
+    let title: String
+    let amount: Double
+    let status: String
+    let statusColor: Color
+    let personName: String
+    let personInitials: String
+    
+    init(
+        title: String = "Need to Pay",
+        amount: Double = 30000,
+        status: String = "Unpaid",
+        statusColor: Color = .red,
+        personName: String = "Chikmah",
+        personInitials: String = "CH"
+    ) {
+        self.title = title
+        self.amount = amount
+        self.status = status
+        self.statusColor = statusColor
+        self.personName = personName
+        self.personInitials = personInitials
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("Need to Pay")
+                Text(title)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                 
                 HStack{
                     HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.right")
+                        Image(systemName: title.contains("Pay") ? "arrow.up.right" : "arrow.down.left")
                             .font(.body)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(title.contains("Pay") ? .red : .green)
                         
-                        Text(formatRupiah(30000))
+                        Text(formatRupiah(amount))
                             .font(.title2)
                             .fontWeight(.bold)
                     }
                     
                     Spacer()
                     
-                    Text("Unpaid")
+                    Text(status)
                         .font(.footnote)
                         .fontWeight(.medium)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(statusColor)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.1))
+                        .background(statusColor.opacity(0.1))
                         .cornerRadius(6)
                 }
             }
@@ -48,16 +71,16 @@ struct SettlementCard: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(UIColor.systemGray6))
                         .frame(width: 40, height: 40)
-                    Text("CH")
+                    Text(personInitials)
                         .font(.footnote)
                         .foregroundStyle(.blue)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("to")
+                    Text(title.contains("Pay") ? "to" : "from")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Text("Chikmah")
+                    Text(personName)
                         .font(.callout)
                 }
             }

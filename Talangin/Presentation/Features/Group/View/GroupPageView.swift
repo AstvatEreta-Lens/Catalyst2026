@@ -12,6 +12,8 @@ struct GroupPageView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: GroupPageViewModel
+    @State private var showShareSheet = false
+    @State private var invoiceFileURL: URL?
     
     init(group: GroupEntity, currentUserID: UUID, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: GroupPageViewModel(
@@ -58,6 +60,11 @@ struct GroupPageView: View {
         .sheet(isPresented: $viewModel.isEditingName) {
             EditGroupNameSheet(viewModel: viewModel)
         }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = invoiceFileURL {
+                ShareSheet(items: [url])
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) { backButton }
@@ -102,6 +109,22 @@ private extension GroupPageView {
             }
             
             Menu {
+                Button {
+                    Task {
+                        // Generate Invoice PDF
+                        if let url = await InvoiceGenerator.generateInvoicePDF(
+                            group: viewModel.group,
+                            members: viewModel.members,
+                            expenses: viewModel.expenses
+                        ) {
+                            invoiceFileURL = url
+                            showShareSheet = true
+                        }
+                    }
+                } label: {
+                    Label("Share Invoice", systemImage: "doc.text")
+                }
+                
                 Button(role: .destructive) {
                     viewModel.showDeleteConfirmation = true
                 } label: {
