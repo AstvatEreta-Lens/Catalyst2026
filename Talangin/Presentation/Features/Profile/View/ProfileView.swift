@@ -15,6 +15,7 @@ struct ProfileView: View {
     
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var authState: AppAuthState
+    @Environment(\.dismiss) private var dismiss
     
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showLogoutConfirm = false
@@ -210,7 +211,9 @@ struct ProfileView: View {
                 Button("Log Out", role: .destructive) {
                     authState.logout()
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    dismiss()
+                }
             } message: {
                 Text("Are you sure you want to log out?")
             }

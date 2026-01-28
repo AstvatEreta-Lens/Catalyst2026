@@ -7,14 +7,19 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct PayNowView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var selectedMethod = "Choose Methods"
+    @Environment(\.modelContext) private var modelContext
     
+    let transaction: SettlementTransaction
+    
+    @State private var selectedMethod = "Bank Transfer"
     @State private var pickerItem: PhotosPickerItem? = nil
     @State private var selectedFileName: String? = nil
     @State private var selectedImageData: Data? = nil
+    @State private var isSubmitting = false
     
     let bankName: String = "BCA"
     let accountNumber: String = "120-12038-19333"
@@ -29,8 +34,20 @@ struct PayNowView: View {
                     VStack(spacing: 24) {
                         
                         // MARK: - SECTION 1: SETTLEMENT INFO
-                        SettlementCard()
-                            .zIndex(1)
+                        VStack(alignment: .center, spacing: 8) {
+                            Text("Total Amount")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            
+                            Text(transaction.amount.formatted(.currency(code: "IDR")))
+                                .font(.system(size: 34, weight: .bold))
+                                .foregroundStyle(.primary)
+                            
+                            Text("Paying to \(transaction.toMemberName)")
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 20)
                         
                         // MARK: - SECTION 2: PAYMENT ACCOUNT
                         VStack(alignment: .leading, spacing: 8) {
@@ -54,7 +71,7 @@ struct PayNowView: View {
                                 
                                 Divider()
                                 
-                                Text("Chikmah")
+                                Text(transaction.toMemberName)
                                     .font(.body)
                                     .padding(16)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -87,13 +104,13 @@ struct PayNowView: View {
                                         
                                         Text(selectedMethod)
                                             .font(.body)
-                                            .foregroundStyle(.gray)
+                                            .foregroundStyle(.primary)
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.caption)
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(.secondary)
                                     }
                                 }
                                 
@@ -108,26 +125,20 @@ struct PayNowView: View {
                                         
                                         Text(selectedFileName ?? "Upload Transfer Proof")
                                             .font(.body)
-                                            .foregroundStyle(selectedFileName == nil ? .gray : .black)
+                                            .foregroundStyle(selectedFileName == nil ? .secondary : .primary)
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.caption)
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(.secondary)
                                     }
                                 }
-                                .onChange(of: pickerItem) { oldValue, newItem in
+                                .onChange(of: pickerItem) { _, newItem in
                                     Task {
-                                        // 1. Ambil data gambar
                                         if let data = try? await newItem?.loadTransferable(type: Data.self) {
                                             self.selectedImageData = data
-
-                                            let formatter = DateFormatter()
-                                            formatter.dateFormat = "yyyyMMdd_HHmm"
-                                            let timestamp = formatter.string(from: Date())
-                                            
-                                            // Update State Nama File
+                                            let timestamp = Int(Date().timeIntervalSince1970)
                                             self.selectedFileName = "IMG_\(timestamp).jpg"
                                         }
                                     }
@@ -143,8 +154,6 @@ struct PayNowView: View {
                     .padding(16)
                 }
             }
-            
-            // MARK: - Navigation Bar
             .navigationTitle("Confirm Payment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -155,29 +164,38 @@ struct PayNowView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
-                        dismiss()
+                    if isSubmitting {
+                        ProgressView()
+                    } else {
+                        Button("Submit") {
+                            submitPayment()
+                        }
+                        .fontWeight(.semibold)
                     }
-                    .fontWeight(.semibold)
                 }
             }
         }
     }
     
-    // Helper untuk format rupiah
-    private func formatRupiah(_ amount: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-        return "Rp " + (formatter.string(from: NSNumber(value: amount)) ?? "0")
+    private func submitPayment() {
+        isSubmitting = true
+        
+        // Create settlement entity
+        let settlement = SettlementEntity(
+            fromMemberID: transaction.fromMemberID,
+            toMemberID: transaction.toMemberID,
+            amount: transaction.amount,
+            attachmentData: selectedImageData,
+            paymentMethod: selectedMethod
+        )
+        
+        modelContext.insert(settlement)
+        
+        try? modelContext.save()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isSubmitting = false
+            dismiss()
+        }
     }
-}
-
-enum PaymentMethod: String, CaseIterable{
-    case transfer = "Bank Transfer"
-    case cash = "Cash"
-}
-
-#Preview {
-    PayNowView()
 }

@@ -33,6 +33,7 @@ struct ExpenseBreakdown: Identifiable {
     let itemName: String?
     let amount: Double
     let paidBy: String
+    let paidByInitials: String
 }
 
 /// Summary of settlements for a specific member
@@ -46,6 +47,9 @@ struct MemberSettlementSummary {
     
     /// Transactions where this member is waiting for payment from others
     let waitingForPayment: [SettlementTransaction]
+    
+    /// Transactions that have been settled
+    let doneTransactions: [SettlementTransaction]
     
     var totalNeedToPay: Double {
         needToPay.reduce(0) { $0 + $1.amount }

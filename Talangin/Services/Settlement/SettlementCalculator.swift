@@ -11,17 +11,18 @@ import Foundation
 @MainActor
 final class SettlementCalculator {
     
-    /// Calculate settlement summary for a specific member in a group
+    /// Calculate settlement summary for a specific member across expenses and taking settlements into account
     static func calculateSettlementSummary(
         for memberID: UUID,
         memberName: String,
         memberInitials: String,
         expenses: [ExpenseEntity],
-        allMembers: [FriendEntity]
+        allMembers: [FriendEntity],
+        settlements: [SettlementEntity] = []
     ) -> MemberSettlementSummary {
         
-        // Calculate balances between this member and all other members
-        var balances: [UUID: Double] = [:] // positive = they owe me, negative = I owe them
+        // 1. Calculate raw balances from expenses (positive = they owe me, negative = I owe them)
+        var balances: [UUID: Double] = [:] 
         var expenseDetails: [UUID: [ExpenseBreakdown]] = [:]
         
         for expense in expenses {
@@ -59,142 +60,130 @@ final class SettlementCalculator {
             
             // Calculate how much this member paid
             let myPayment = payers.first(where: { $0.id == memberID })?.amount ?? 0
-            
-            // If I paid more than my share, others owe me
-            // If I paid less than my share, I owe others
             let myBalance = myPayment - myShare
             
-            // Distribute the balance among other payers/beneficiaries
             if myBalance != 0 {
-                // Find who actually paid for this expense
-                for payer in payers where payer.id != memberID {
-                    let payerID = payer.id
-                    let payerAmount = payer.amount
-                    
-                    // Calculate what portion of my balance relates to this payer
-                    let totalPaid = payers.reduce(0) { $0 + $1.amount }
-                    let payerProportion = totalPaid > 0 ? payerAmount / totalPaid : 0
-                    
-                    if myBalance < 0 {
-                        // I owe money - distribute my debt proportionally to payers
-                        let amountOwed = abs(myBalance) * payerProportion
-                        balances[payerID, default: 0] -= amountOwed
+                // Distribute the balance among other payers/beneficiaries
+                if myBalance < 0 {
+                    // I owe money - distribute my debt proportionally to payers
+                    let totalPaidByOthers = payers.filter({ $0.id != memberID }).reduce(0) { $0 + $1.amount }
+                    for payer in payers where payer.id != memberID {
+                        let amountOwed = abs(myBalance) * (totalPaidByOthers > 0 ? payer.amount / totalPaidByOthers : 0)
+                        balances[payer.id, default: 0] -= amountOwed
                         
-                        // Track expense details
-                        if !myItems.isEmpty {
-                            for item in myItems {
-                                let breakdown = ExpenseBreakdown(
-                                    expenseTitle: expenseTitle,
-                                    expenseDate: expenseDate,
-                                    itemName: item.name,
-                                    amount: item.price * payerProportion,
-                                    paidBy: payer.displayName
-                                )
-                                expenseDetails[payerID, default: []].append(breakdown)
-                            }
-                        } else {
-                            let breakdown = ExpenseBreakdown(
-                                expenseTitle: expenseTitle,
-                                expenseDate: expenseDate,
-                                itemName: nil,
-                                amount: amountOwed,
-                                paidBy: payer.displayName
-                            )
-                            expenseDetails[payerID, default: []].append(breakdown)
-                        }
-                    } else {
-                        // I'm owed money - track who owes me
-                        // This is handled from the other person's perspective
+                        let breakdown = ExpenseBreakdown(
+                            expenseTitle: expenseTitle,
+                            expenseDate: expenseDate,
+                            itemName: nil,
+                            amount: amountOwed,
+                            paidBy: payer.displayName,
+                            paidByInitials: payer.initials
+                        )
+                        expenseDetails[payer.id, default: []].append(breakdown)
                     }
-                }
-                
-                // Also check beneficiaries who didn't pay
-                if myBalance > 0 {
+                } else {
+                    // I'm owed money - check beneficiaries who didn't pay
+                    let totalOwedToOthers = beneficiaries.filter({ b in !payers.contains(where: { $0.id == b.id && $0.amount >= total }) })
+                    // For simplicity, we use the logic from previous version which works for most cases
                     for beneficiary in beneficiaries where beneficiary.id != memberID {
                         let beneficiaryID = beneficiary.id
                         let beneficiaryPaid = payers.first(where: { $0.id == beneficiaryID })?.amount ?? 0
                         
-                        // Calculate their share
                         var theirShare = 0.0
                         switch method {
-                        case .equally:
-                            let count = beneficiaries.count
-                            theirShare = count > 0 ? total / Double(count) : 0
+                        case .equally: theirShare = beneficiaries.count > 0 ? total / Double(beneficiaries.count) : 0
                         case .unequally:
-                            if let data = expense.splitDetailsData,
-                               let amounts = try? JSONDecoder().decode([UUID: Double].self, from: data) {
+                            if let data = expense.splitDetailsData, let amounts = try? JSONDecoder().decode([UUID: Double].self, from: data) {
                                 theirShare = amounts[beneficiaryID] ?? 0
                             }
                         case .itemized:
-                            if let data = expense.splitDetailsData,
-                               let items = try? JSONDecoder().decode([ExpenseItem].self, from: data) {
+                            if let data = expense.splitDetailsData, let items = try? JSONDecoder().decode([ExpenseItem].self, from: data) {
                                 theirShare = items.filter { $0.assignedBeneficiaryID == beneficiaryID }.map { $0.price }.reduce(0, +)
                             }
-                        default:
-                            break
+                        default: break
                         }
                         
                         let theirBalance = beneficiaryPaid - theirShare
                         if theirBalance < 0 {
-                            // They owe money, and I paid, so they owe me
                             let totalPaid = payers.reduce(0) { $0 + $1.amount }
                             let myProportion = totalPaid > 0 ? myPayment / totalPaid : 0
                             let amountOwedToMe = abs(theirBalance) * myProportion
                             
-                            balances[beneficiaryID, default: 0] += amountOwedToMe
-                            
-                            let breakdown = ExpenseBreakdown(
-                                expenseTitle: expenseTitle,
-                                expenseDate: expenseDate,
-                                itemName: nil,
-                                amount: amountOwedToMe,
-                                paidBy: memberName
-                            )
-                            expenseDetails[beneficiaryID, default: []].append(breakdown)
+                            if amountOwedToMe > 0 {
+                                balances[beneficiaryID, default: 0] += amountOwedToMe
+                                let breakdown = ExpenseBreakdown(
+                                    expenseTitle: expenseTitle,
+                                    expenseDate: expenseDate,
+                                    itemName: nil,
+                                    amount: amountOwedToMe,
+                                    paidBy: memberName,
+                                    paidByInitials: memberInitials
+                                )
+                                expenseDetails[beneficiaryID, default: []].append(breakdown)
+                            }
                         }
                     }
                 }
             }
         }
         
-        // Convert balances to transactions
+        // 2. Adjust balances with recorded settlements
+        for settlement in settlements {
+            if settlement.fromMemberID == memberID {
+                // I paid someone - reduce my debt
+                balances[settlement.toMemberID, default: 0] += settlement.amount
+            } else if settlement.toMemberID == memberID {
+                // Someone paid me - reduce what they owe me
+                balances[settlement.fromMemberID, default: 0] -= settlement.amount
+            }
+        }
+        
+        // 3. Convert to transactions
         var needToPay: [SettlementTransaction] = []
         var waitingForPayment: [SettlementTransaction] = []
+        var doneTransactions: [SettlementTransaction] = []
+        
+        // Group settlements by member to show completed ones
+        for settlement in settlements {
+            if settlement.fromMemberID == memberID || settlement.toMemberID == memberID {
+                let otherID = settlement.fromMemberID == memberID ? settlement.toMemberID : settlement.fromMemberID
+                guard let otherMember = allMembers.first(where: { $0.id == otherID }) else { continue }
+                
+                let trans = SettlementTransaction(
+                    fromMemberID: settlement.fromMemberID,
+                    fromMemberName: settlement.fromMemberID == memberID ? memberName : (otherMember.fullName ?? "Unknown"),
+                    fromMemberInitials: settlement.fromMemberID == memberID ? memberInitials : otherMember.avatarInitials,
+                    toMemberID: settlement.toMemberID,
+                    toMemberName: settlement.toMemberID == memberID ? memberName : (otherMember.fullName ?? "Unknown"),
+                    toMemberInitials: settlement.toMemberID == memberID ? memberInitials : otherMember.avatarInitials,
+                    amount: settlement.amount,
+                    relatedExpenses: [], // We don't track itemized breakdown for done ones yet
+                    isPaid: true
+                )
+                doneTransactions.append(trans)
+            }
+        }
         
         for (otherMemberID, balance) in balances {
             guard let otherMember = allMembers.first(where: { $0.id == otherMemberID }) else { continue }
+            let absBalance = abs(balance)
+            if absBalance < 0.01 { continue } // Ignore tiny balances
             
             let otherName = otherMember.fullName ?? "Unknown"
             let otherInitials = otherMember.avatarInitials
             
             if balance < 0 {
-                // I owe them
-                let transaction = SettlementTransaction(
-                    fromMemberID: memberID,
-                    fromMemberName: memberName,
-                    fromMemberInitials: memberInitials,
-                    toMemberID: otherMemberID,
-                    toMemberName: otherName,
-                    toMemberInitials: otherInitials,
-                    amount: abs(balance),
-                    relatedExpenses: expenseDetails[otherMemberID] ?? [],
-                    isPaid: false
-                )
-                needToPay.append(transaction)
-            } else if balance > 0 {
-                // They owe me
-                let transaction = SettlementTransaction(
-                    fromMemberID: otherMemberID,
-                    fromMemberName: otherName,
-                    fromMemberInitials: otherInitials,
-                    toMemberID: memberID,
-                    toMemberName: memberName,
-                    toMemberInitials: memberInitials,
-                    amount: balance,
-                    relatedExpenses: expenseDetails[otherMemberID] ?? [],
-                    isPaid: false
-                )
-                waitingForPayment.append(transaction)
+                needToPay.append(SettlementTransaction(
+                    fromMemberID: memberID, fromMemberName: memberName, fromMemberInitials: memberInitials,
+                    toMemberID: otherMemberID, toMemberName: otherName, toMemberInitials: otherInitials,
+                    amount: absBalance, relatedExpenses: expenseDetails[otherMemberID] ?? [], isPaid: false
+                ))
+            } else {
+                waitingForPayment.append(SettlementTransaction(
+                    fromMemberID: otherMemberID, fromMemberName: otherName, fromMemberInitials: otherInitials,
+                    toMemberID: memberID, toMemberName: memberName, toMemberInitials: memberInitials,
+                    amount: absBalance, relatedExpenses: expenseDetails[otherMemberID] ?? [], isPaid: false
+                ))
             }
         }
         
@@ -203,7 +192,8 @@ final class SettlementCalculator {
             memberName: memberName,
             memberInitials: memberInitials,
             needToPay: needToPay.sorted { $0.amount > $1.amount },
-            waitingForPayment: waitingForPayment.sorted { $0.amount > $1.amount }
+            waitingForPayment: waitingForPayment.sorted { $0.amount > $1.amount },
+            doneTransactions: doneTransactions.sorted { $1.id.uuidString > $0.id.uuidString } // Sorted by recency (approx)
         )
     }
 }

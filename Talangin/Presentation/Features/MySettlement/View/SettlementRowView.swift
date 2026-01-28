@@ -75,23 +75,32 @@ struct SettlementRowView: View {
                 }
                 
                 if isExpanded && !expenseBreakdowns.isEmpty {
-                    VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Group by date if needed, but for now we follow the image's single date header per group if possible
+                        // The image shows one date for multiple cards. Let's show the first breakdown's date as header.
+                        if let firstDate = expenseBreakdowns.first?.expenseDate {
+                            Text(firstDate.formatted(date: .abbreviated, time: .omitted))
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                                .padding(.leading, 4)
+                        }
+                        
                         ForEach(expenseBreakdowns) { breakdown in
                             ExpenseBreakdownCard(breakdown: breakdown)
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
                 }
             }
-            .background(Color.blue.opacity(0.1))
+            .background(Color.blue.opacity(0.08))
             .clipShape(
                 UnevenRoundedRectangle(
-                    bottomLeadingRadius: 12,
-                    bottomTrailingRadius: 12
+                    bottomLeadingRadius: 20,
+                    bottomTrailingRadius: 20
                 )
             )
-            .offset(y: -6)
+            .offset(y: -10)
         }
     }
 }
@@ -101,42 +110,53 @@ struct ExpenseBreakdownCard: View {
     let breakdown: ExpenseBreakdown
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    if let itemName = breakdown.itemName {
-                        Text(itemName)
-                            .font(.callout)
-                            .fontWeight(.medium)
-                    }
-                    Text(breakdown.expenseTitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
+        HStack(spacing: 0) {
+            // Left Side: Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(breakdown.expenseTitle)
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
                 
                 Text(formatRupiah(breakdown.amount))
-                    .font(.callout)
-                    .fontWeight(.bold)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
             }
             
-            HStack(spacing: 4) {
-                Text("Paid by")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Text(breakdown.paidBy)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                Spacer()
-                Text(breakdown.expenseDate.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+            Spacer()
+            
+            // Right Side: Payer Info
+            HStack(spacing: 8) {
+                // Initial Circle
+                Circle()
+                    .fill(Color(uiColor: .systemGray6))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Text(breakdown.paidByInitials)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.blue)
+                    )
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Paid by")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    
+                    Text(breakdown.paidBy)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.5))
             }
+            .padding(.leading, 8)
         }
-        .padding(12)
+        .padding(16)
         .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
     
     private func formatRupiah(_ amount: Double) -> String {

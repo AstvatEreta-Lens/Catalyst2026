@@ -33,53 +33,72 @@ class InvoiceGenerator {
             memberSettlements.append((member, summary))
         }
         
-        // Create invoice view
-        let invoiceView = InvoiceDocumentView(
-            group: group,
-            memberSettlements: memberSettlements,
-            generatedDate: Date()
-        )
-        
-        // Render to PDF
-        let renderer = ImageRenderer(content: invoiceView)
-        
-        // A4 size in points (595 x 842)
         let a4Size = CGSize(width: 595, height: 842)
-        renderer.proposedSize = ProposedViewSize(a4Size)
         
-        // Create temporary file URL
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "Invoice_\(group.name ?? "Group")_\(Date().timeIntervalSince1970).pdf"
-        let fileURL = tempDir.appendingPathComponent(fileName)
+        // Use Documents directory for better persistence during sharing process
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let invoicesDirectory = documentsURL.appendingPathComponent("Invoices", isDirectory: true)
         
-        // Render to PDF
+        // Ensure directory exists
+        try? fileManager.createDirectory(at: invoicesDirectory, withIntermediateDirectories: true)
+        
+        // Clean filename: remove spaces and special characters, add timestamp
+        let cleanGroupName = (group.name ?? "Group").components(separatedBy: .punctuationCharacters).joined().replacingOccurrences(of: " ", with: "_")
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let fileName = "Invoice_\(cleanGroupName)_\(timestamp).pdf"
+        let fileURL = invoicesDirectory.appendingPathComponent(fileName)
+        
+        // Remove old file if exists
+        try? fileManager.removeItem(at: fileURL)
+        
+        // Create PDF Context
         guard let consumer = CGDataConsumer(url: fileURL as CFURL),
               let pdfContext = CGContext(consumer: consumer, mediaBox: nil, nil) else {
             return nil
         }
         
-        renderer.render { size, renderFunction in
-            var mediaBox = CGRect(origin: .zero, size: a4Size)
+        let membersPerPage = 4
+        let totalMembers = memberSettlements.count
+        let pageCount = max(1, Int(ceil(Double(totalMembers) / Double(membersPerPage))))
+        
+        for pageIndex in 0..<pageCount {
+            let renderer = ImageRenderer(content: SpecificInvoicePage(
+                group: group,
+                memberSettlements: memberSettlements,
+                pageIndex: pageIndex,
+                membersPerPage: membersPerPage,
+                pageCount: pageCount,
+                generatedDate: Date()
+            ))
             
-            pdfContext.beginPage(mediaBox: &mediaBox)
-            renderFunction(pdfContext)
-            pdfContext.endPage()
-            pdfContext.closePDF()
+            renderer.proposedSize = ProposedViewSize(a4Size)
+            
+            renderer.render { size, renderFunction in
+                var mediaBox = CGRect(origin: .zero, size: a4Size)
+                pdfContext.beginPage(mediaBox: &mediaBox)
+                renderFunction(pdfContext)
+                pdfContext.endPage()
+            }
         }
         
-        return fileURL
+        pdfContext.closePDF()
+        
+        // Verification: ensure file exists and is readable
+        if fileManager.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+        
+        return nil
     }
     
-    /// Generate invoice PNG image for a group
     static func generateInvoiceImage(
         group: GroupEntity,
         members: [FriendEntity],
         expenses: [ExpenseEntity]
     ) -> UIImage? {
-        
-        // Calculate settlements for all members
+        // ... (remaining image logic is fine, let's just make it consistent with the page count)
         var memberSettlements: [(member: FriendEntity, summary: MemberSettlementSummary)] = []
-        
         for member in members {
             let summary = SettlementCalculator.calculateSettlementSummary(
                 for: member.id ?? UUID(),
@@ -91,21 +110,39 @@ class InvoiceGenerator {
             memberSettlements.append((member, summary))
         }
         
-        // Create invoice view
-        let invoiceView = InvoiceDocumentView(
+        let renderer = ImageRenderer(content: SpecificInvoicePage(
+            group: group,
+            memberSettlements: memberSettlements,
+            pageIndex: 0,
+            membersPerPage: 4,
+            pageCount: 1,
+            generatedDate: Date()
+        ))
+        
+        renderer.proposedSize = ProposedViewSize(width: 595, height: 842)
+        renderer.scale = 2.0
+        
+        return renderer.uiImage
+    }
+}
+
+/// Helper view to render a single isolated page for the PDF generator
+struct SpecificInvoicePage: View {
+    let group: GroupEntity
+    let memberSettlements: [(member: FriendEntity, summary: MemberSettlementSummary)]
+    let pageIndex: Int
+    let membersPerPage: Int
+    let pageCount: Int
+    let generatedDate: Date
+    
+    var body: some View {
+        InvoiceDocumentView(
             group: group,
             memberSettlements: memberSettlements,
             generatedDate: Date()
         )
-        
-        // Render to image
-        let renderer = ImageRenderer(content: invoiceView)
-        
-        // A4 size in points (595 x 842) at 2x scale for better quality
-        let a4Size = CGSize(width: 595, height: 842)
-        renderer.proposedSize = ProposedViewSize(a4Size)
-        renderer.scale = 2.0
-        
-        return renderer.uiImage
+        .offset(y: -CGFloat(pageIndex) * 842)
+        .frame(width: 595, height: 842, alignment: .top)
+        .clipped()
     }
 }

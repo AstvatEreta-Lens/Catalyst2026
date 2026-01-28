@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SummaryCardView: View {
+    let youNeedToPay: Double
+    let waitingForPayment: Double
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -16,7 +18,7 @@ struct SummaryCardView: View {
             VStack(spacing: 0) {
                 summaryRow(
                     title: "YOU NEED TO PAY",
-                    amount: 100_000,
+                    amount: youNeedToPay,
                     isPositive: false
                 )
 
@@ -24,7 +26,7 @@ struct SummaryCardView: View {
 
                 summaryRow(
                     title: "WAITING FOR PAYMENT",
-                    amount: 100_000_000,
+                    amount: waitingForPayment,
                     isPositive: true
                 )
             }
@@ -94,7 +96,6 @@ struct SummaryCardView: View {
         .padding()
     }
 }
-
 #Preview {
-    SummaryCardView()
+    SummaryCardView(youNeedToPay: 0, waitingForPayment: 0)
 }

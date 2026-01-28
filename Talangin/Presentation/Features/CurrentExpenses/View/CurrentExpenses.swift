@@ -66,7 +66,7 @@ struct CurrentExpenses: View {
                                     let dummyAmount = 15000.0
                                     let status = "You Owe"
                                     
-                                    NavigationLink(destination: PayNowView()) {
+                                    NavigationLink(destination: SettlementView(member: friend)) {
                                         ExpensesList(
                                             item: friend as! ExpenseDisplayItem,
                                             subtitle: status,
@@ -83,7 +83,7 @@ struct CurrentExpenses: View {
                                     let totalExpense = 250000.0
                                     let memberInfo = "\(group.memberCount) Anggota"
                                     
-                                    NavigationLink(destination: PayNowView()) {
+                                    NavigationLink(destination: SettlementView(group: group)) {
                                         ExpensesList(
                                             item: group,
                                             subtitle: memberInfo,

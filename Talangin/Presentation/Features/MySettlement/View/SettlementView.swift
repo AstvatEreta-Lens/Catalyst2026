@@ -1,34 +1,63 @@
 //
-//  PayNowView.swift
+//  SettlementView.swift
 //  Talangin
 //
 //  Created by Ali Jazzy Rasyid on 20/01/26.
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettlementView: View {
+    @Environment(\.modelContext) private var modelContext
+    
+    // Global data queries
+    @Query private var allExpenses: [ExpenseEntity]
+    @Query private var allSettlements: [SettlementEntity]
+    @Query private var allFriends: [FriendEntity]
+    
+    // Optional filters for group-specific view
     let member: FriendEntity?
     let group: GroupEntity?
-    let expenses: [ExpenseEntity]
-    let allMembers: [FriendEntity]
     
+    // Local state
     @State private var selectedSegment: SettlementSegment = .debt
     @State private var expandedTransactions: Set<UUID> = []
-    @State private var selectedFilter = "All"
-    @State private var paySheetIsPresented: Bool = false
-    @State private var settlementSummary: MemberSettlementSummary?
+    @State private var selectedTransaction: SettlementTransaction?
+    
+    private let currentUserID = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
     
     init(
         member: FriendEntity? = nil,
-        group: GroupEntity? = nil,
-        expenses: [ExpenseEntity] = [],
-        allMembers: [FriendEntity] = []
+        group: GroupEntity? = nil
     ) {
         self.member = member
         self.group = group
-        self.expenses = expenses
-        self.allMembers = allMembers
+    }
+    
+    private var settlementSummary: MemberSettlementSummary {
+        // Filter expenses if a group is provided
+        let filteredExpenses = group != nil ? allExpenses.filter { $0.group?.id == group?.id } : allExpenses
+        
+        return SettlementCalculator.calculateSettlementSummary(
+            for: currentUserID,
+            memberName: "Me",
+            memberInitials: "ME",
+            expenses: filteredExpenses,
+            allMembers: allFriends,
+            settlements: allSettlements
+        )
+    }
+    
+    private var filteredTransactions: [SettlementTransaction] {
+        switch selectedSegment {
+        case .debt:
+            return settlementSummary.needToPay
+        case .receivable:
+            return settlementSummary.waitingForPayment
+        case .done:
+            return settlementSummary.doneTransactions
+        }
     }
     
     var body: some View {
@@ -38,7 +67,7 @@ struct SettlementView: View {
             
             ScrollView {
                 VStack(spacing: 24) {
-                    Picker("Picker", selection: $selectedSegment) {
+                    Picker("Segment", selection: $selectedSegment) {
                         ForEach(SettlementSegment.allCases, id: \.self) {
                             Text($0.rawValue)
                         }
@@ -46,112 +75,77 @@ struct SettlementView: View {
                     .pickerStyle(.segmented)
                     .padding(.top, 16)
                     
-                    if let summary = settlementSummary {
-                        // Display transactions based on filter
-                        let transactions = filteredTransactions(summary: summary)
-                        
-                        if transactions.isEmpty {
-                            VStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.green)
-                                Text("All settled up!")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.top, 60)
-                        } else {
-                            ForEach(transactions) { transaction in
-                                Button(action: { paySheetIsPresented = true }) {
-                                    SettlementRowView(
-                                        isExpanded: Binding(
-                                            get: { expandedTransactions.contains(transaction.id) },
-                                            set: { isExpanded in
-                                                if isExpanded {
-                                                    expandedTransactions.insert(transaction.id)
-                                                } else {
-                                                    expandedTransactions.remove(transaction.id)
-                                                }
+                    if filteredTransactions.isEmpty {
+                        emptyStateView
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(filteredTransactions) { transaction in
+                                SettlementRowView(
+                                    isExpanded: Binding(
+                                        get: { expandedTransactions.contains(transaction.id) },
+                                        set: { isExpanded in
+                                            if isExpanded {
+                                                expandedTransactions.insert(transaction.id)
+                                            } else {
+                                                expandedTransactions.remove(transaction.id)
                                             }
-                                        ),
-                                        onTap: {
-                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                                if expandedTransactions.contains(transaction.id) {
-                                                    expandedTransactions.remove(transaction.id)
-                                                } else {
-                                                    expandedTransactions.insert(transaction.id)
-                                                }
+                                        }
+                                    ),
+                                    onTap: {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                            if expandedTransactions.contains(transaction.id) {
+                                                expandedTransactions.remove(transaction.id)
+                                            } else {
+                                                expandedTransactions.insert(transaction.id)
                                             }
-                                        },
-                                        title: isNeedToPayTransaction(transaction, summary: summary) ? "Need to Pay" : "Waiting For Payment",
-                                        amount: transaction.amount,
-                                        status: transaction.status,
-                                        statusColor: transaction.isPaid ? .green : .red,
-                                        personName: isNeedToPayTransaction(transaction, summary: summary) ? transaction.toMemberName : transaction.fromMemberName,
-                                        personInitials: isNeedToPayTransaction(transaction, summary: summary) ? transaction.toMemberInitials : transaction.fromMemberInitials,
-                                        expenseBreakdowns: transaction.relatedExpenses
-                                    )
+                                        }
+                                    },
+                                    title: transaction.isPaid ? "Settled" : (selectedSegment == .debt ? "Need to Pay" : "Waiting For Payment"),
+                                    amount: transaction.amount,
+                                    status: transaction.status,
+                                    statusColor: transaction.isPaid ? .green : (selectedSegment == .debt ? .red : .orange),
+                                    personName: selectedSegment == .debt ? transaction.toMemberName : transaction.fromMemberName,
+                                    personInitials: selectedSegment == .debt ? transaction.toMemberInitials : transaction.fromMemberInitials,
+                                    expenseBreakdowns: transaction.relatedExpenses
+                                )
+                                .onTapGesture {
+                                    if !transaction.isPaid && selectedSegment == .debt {
+                                        selectedTransaction = transaction
+                                    }
                                 }
-                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                     }
                 }
                 .padding(.horizontal, 16)
-                .sheet(isPresented: $paySheetIsPresented) {
-                    PayNowView()
-                }
+                .padding(.bottom, 100)
             }
         }
-        .navigationTitle(member?.fullName ?? "My Settlement")
-        .onAppear {
-            calculateSettlement()
+        .navigationTitle(group?.name ?? "My Settlements")
+        .sheet(item: $selectedTransaction) { transaction in
+            PayNowView(transaction: transaction)
         }
     }
     
-    private func calculateSettlement() {
-        guard let member = member else { return }
-        
-        settlementSummary = SettlementCalculator.calculateSettlementSummary(
-            for: member.id ?? UUID(),
-            memberName: member.fullName ?? "Unknown",
-            memberInitials: member.avatarInitials,
-            expenses: expenses,
-            allMembers: allMembers
-        )
-    }
-    
-    private func filteredTransactions(summary: MemberSettlementSummary) -> [SettlementTransaction] {
-        var transactions: [SettlementTransaction] = []
-        
-        switch selectedFilter {
-        case "Need To Pay":
-            transactions = summary.needToPay
-        case "Will Receive":
-            transactions = summary.waitingForPayment
-        default:
-            transactions = summary.needToPay + summary.waitingForPayment
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 48))
+                .foregroundColor(.green)
+            Text(selectedSegment == .done ? "No settled transactions yet" : "All settled up!")
+                .font(.headline)
+                .foregroundColor(.secondary)
         }
-        
-        // Filter by segment (Active/Done)
-        return transactions.filter { transaction in
-            selectedSegment == .debt ? !transaction.isPaid : transaction.isPaid
-        }
+        .padding(.top, 60)
     }
-    
-    private func isNeedToPayTransaction(_ transaction: SettlementTransaction, summary: MemberSettlementSummary) -> Bool {
-        return summary.needToPay.contains(where: { $0.id == transaction.id })
-    }
-}
-
-// Enum Anda
-enum SettlementSegment: String, CaseIterable {
-    case debt = "Debt"
-    case receivable = "Receivable"
-    case done = "Done"
-    
 }
 
 #Preview {
     SettlementView()
+}
+
+enum SettlementSegment: String, CaseIterable {
+    case debt = "Debt"
+    case receivable = "Receivable"
+    case done = "Done"
 }

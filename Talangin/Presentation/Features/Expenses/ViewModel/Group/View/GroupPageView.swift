@@ -14,6 +14,7 @@ struct GroupPageView: View {
     @StateObject private var viewModel: GroupPageViewModel
     @State private var showShareSheet = false
     @State private var invoiceFileURL: URL?
+    @State private var isGeneratingInvoice = false
     
     init(group: GroupEntity, currentUserID: UUID, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: GroupPageViewModel(
@@ -60,13 +61,30 @@ struct GroupPageView: View {
         .sheet(isPresented: $viewModel.isEditingName) {
             EditGroupNameSheet(viewModel: viewModel)
         }
-        .sheet(isPresented: $showShareSheet, onDismiss: {
-            invoiceFileURL = nil
-        }) {
-            if let url = invoiceFileURL {
-                ShareSheet(items: [url]) { _, _, _, _ in
-                    showShareSheet = false
+        .overlay {
+            if isGeneratingInvoice {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        
+                        Text("Preparing Invoice...")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .padding(30)
+                    .background(Color(.systemGray6).opacity(0.8))
+                    .cornerRadius(20)
                 }
+            }
+        }
+        .background {
+            if let url = invoiceFileURL {
+                ShareSheetPresenter(isPresented: $showShareSheet, items: [url])
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -114,8 +132,12 @@ private extension GroupPageView {
             
             Menu {
                 Button {
+                    isGeneratingInvoice = true
                     Task {
-                        // Generate Invoice PDF
+                        // 1. Wait for menu animation to finish
+                        try? await Task.sleep(nanoseconds: 500_000_000)
+                        
+                        // 2. Generate Invoice PDF
                         let url = await InvoiceGenerator.generateInvoicePDF(
                             group: viewModel.group,
                             members: viewModel.members,
@@ -123,6 +145,7 @@ private extension GroupPageView {
                         )
                         
                         await MainActor.run {
+                            isGeneratingInvoice = false
                             if let url = url {
                                 invoiceFileURL = url
                                 showShareSheet = true
@@ -132,6 +155,7 @@ private extension GroupPageView {
                 } label: {
                     Label("Share Invoice", systemImage: "doc.text")
                 }
+                .disabled(isGeneratingInvoice)
                 
                 Button(role: .destructive) {
                     viewModel.showDeleteConfirmation = true

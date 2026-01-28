@@ -25,9 +25,7 @@ struct MemberSummaryCardView: View {
         NavigationLink {
             SettlementView(
                 member: member,
-                group: group,
-                expenses: expenses,
-                allMembers: allMembers
+                group: group
             )
         } label: {
             VStack(spacing: 10) {

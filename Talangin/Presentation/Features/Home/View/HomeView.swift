@@ -11,10 +11,36 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var groups: [GroupEntity]
+    @Query private var allExpenses: [ExpenseEntity]
+    @Query private var allSettlements: [SettlementEntity]
+    @Query private var allFriends: [FriendEntity]
+    
     @State private var viewModel: HomeViewModel?
     
     // Using the same static ID as AddNewExpenseView for consistency in PoC
     private let currentUserID = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
+    
+    private var globalSummary: MemberSettlementSummary {
+        // Find current user initials if available, or use "ME"
+        let initials = "ME" 
+        
+        return SettlementCalculator.calculateSettlementSummary(
+            for: currentUserID,
+            memberName: "Me",
+            memberInitials: initials,
+            expenses: allExpenses,
+            allMembers: allFriends,
+            settlements: allSettlements
+        )
+    }
+    
+    private var totalNeedToPay: Double {
+        globalSummary.totalNeedToPay
+    }
+    
+    private var totalWaitingForPayment: Double {
+        globalSummary.totalWaitingForPayment
+    }
     
     var body: some View {
         NavigationStack{
@@ -25,7 +51,10 @@ struct HomeView: View {
                     
                     VStack(alignment: .leading, spacing: 20) {
                         
-                        SummaryCardView()
+                        SummaryCardView(
+                            youNeedToPay: totalNeedToPay,
+                            waitingForPayment: totalWaitingForPayment
+                        )
                         // MARK: - Current Expenses Header
                         HStack {
                             Text("Current Expenses")
