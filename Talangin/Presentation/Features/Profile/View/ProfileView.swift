@@ -232,14 +232,16 @@ struct ProfileView: View {
                     currentName: viewModel.fullName,
                     currentEmail: viewModel.email,
                     currentPhone: viewModel.phoneNumber,
-                    currentPhotoData: viewModel.profilePhotoData
-                ) { name, email, phone, photoData in
-                    viewModel.updateProfile(name: name, email: email, phone: phone)
-                    if let photoData = photoData {
-                        viewModel.updatePhoto(photoData)
-                    }
-                }
-            }
+                    currentPhotoData: viewModel.profilePhotoData,
+                    onSave: { name, email, phone, photoData in
+                        viewModel.updateProfile(name: name, email: email, phone: phone)
+                        if let photoData = photoData {
+                            viewModel.updatePhoto(photoData)
+                        }
+                    },
+                    onPhotoChanged: nil
+                )
+             }
             
         }
         

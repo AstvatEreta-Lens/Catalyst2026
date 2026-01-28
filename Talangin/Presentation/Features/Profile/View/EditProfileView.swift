@@ -19,7 +19,6 @@ struct EditProfileView: View {
     let currentEmail: String
     let currentPhone: String?
     let currentPhotoData: Data?
-    let currentPhotoData: Data?
     let onSave: (String, String, String?, Data?) -> Void
     let onPhotoChanged: ((Data) -> Void)?
     
@@ -274,13 +273,13 @@ private extension EditProfileView {
     }
 }
 
-#Preview {
-    EditProfileView(
-        currentName: "Rifqi Smith",
-        currentEmail: "john.doe@gmail.com",
-        currentPhone: "081234567890",
-        currentPhotoData: nil
-    ) { name, email, phone, photo in
-        print("Saved: \(name), \(email), \(phone ?? "no phone"), photo: \(photo != nil)")
-    }
-}
+//#Preview {
+//    EditProfileView(
+//        currentName: "Rifqi Smith",
+//        currentEmail: "john.doe@gmail.com",
+//        currentPhone: "081234567890",
+//        currentPhotoData: nil
+//    ) { name, email, phone, photo in
+//        print("Saved: \(name), \(email), \(phone ?? "no phone"), photo: \(photo != nil)")
+//    }
+//}
