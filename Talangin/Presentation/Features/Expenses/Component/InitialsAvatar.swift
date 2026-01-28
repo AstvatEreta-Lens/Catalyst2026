@@ -15,9 +15,9 @@ struct InitialsAvatar: View {
     
     var body: some View {
         Text(initials)
-            .font(.system(size: size * 0.4, weight: .bold))
+            .font(.system(size: size * 0.4))
             .frame(width: size, height: size)
             .background(Color.gray.opacity(0.3))
-            .clipShape(Circle())
+            .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }

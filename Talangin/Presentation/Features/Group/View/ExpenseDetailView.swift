@@ -10,6 +10,7 @@ import SwiftUI
 struct ExpenseDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: ExpenseDetailViewModel
+    @State private var showEditSheet: Bool = false
     
     init(expense: ExpenseEntity) {
         _viewModel = StateObject(wrappedValue: ExpenseDetailViewModel(expense: expense))
@@ -18,16 +19,16 @@ struct ExpenseDetailView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-              ZStack(alignment: .topLeading) {
-                  headerSection
-                  VStack(spacing: 24) {
-                      mainCard
-                      splitWithSection
-                      splitBySection
-                  }
-                  .padding(.top,160)
-                  .padding(.horizontal)
-                  .padding(.bottom, 30)
+                ZStack(alignment: .topLeading) {
+                    headerSection
+                    VStack(spacing: 24) {
+                        mainCard
+                        splitWithSection
+                        splitBySection
+                    }
+                    .padding(.top,160)
+                    .padding(.horizontal)
+                    .padding(.bottom, 30)
                 }
                 
             }
@@ -60,10 +61,13 @@ struct ExpenseDetailView: View {
                         Spacer()
                         
                         Button("Edit") {
-                            // Edit logic - Could open AddNewExpenseView in edit mode
+                            showEditSheet = true
                         }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.white)
+                        .sheet(isPresented: $showEditSheet) {
+                            AddNewExpenseView(expenseToEdit: viewModel.expense)
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 60)
@@ -88,13 +92,13 @@ struct ExpenseDetailView: View {
                     .foregroundColor(.secondary)
                 
                 HStack {
-               
+                    
                     Text(viewModel.formatCurrency(viewModel.totalAmount))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.primary)
                     
                     Spacer()
-   
+                    
                 }
             }
             .padding(20)
@@ -104,24 +108,24 @@ struct ExpenseDetailView: View {
             
             // Paid By Section
             VStack(alignment: .leading, spacing: 16) {
-                        Text("Paid By")
-                            .font(.Headline)
-                            .foregroundColor(.black)
-                       
-            
-                    ForEach(viewModel.payers, id: \.id) { payer in
-                        HStack(spacing: 12) {
-                            InitialsAvatar(initials: payer.initials, size: 36)
-                            
-                            Text(payer.displayName)
-                                .font(.system(size: 16, weight: .medium))
-                            
-                            Spacer()
-                            
-                            Text(viewModel.formatCurrency(payer.amount))
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
-                        }
+                Text("Paid By")
+                    .font(.Headline)
+                    .foregroundColor(.black)
+                
+                
+                ForEach(viewModel.payers, id: \.id) { payer in
+                    HStack(spacing: 12) {
+                        InitialsAvatar(initials: payer.initials, size: 36)
+                        
+                        Text(payer.displayName)
+                            .font(.system(size: 16, weight: .medium))
+                        
+                        Spacer()
+                        
+                        Text(viewModel.formatCurrency(payer.amount))
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
+                    }
                     
                 }
             }
@@ -131,7 +135,7 @@ struct ExpenseDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
-
+    
     
     
     private var splitWithSection: some View {
@@ -148,7 +152,7 @@ struct ExpenseDetailView: View {
                                 InitialsAvatar(initials: ben.avatarInitials, size: 50)
                                 Text(ben.fullName.components(separatedBy: " ").first ?? ben.fullName)
                                     .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.primary)
                             }
                         }
                     }
