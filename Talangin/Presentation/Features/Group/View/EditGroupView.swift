@@ -1,31 +1,33 @@
 //
-//  CreateGroupView.swift
+//  EditGroupView.swift
 //  Talangin
 //
 //  Created by Rifqi Rahman on 27/01/26.
 //
-//  View for creating a new group.
-//  Includes form for group name, profile picture, members selection, and payment due date.
+//  View for editing an existing group.
+//  Similar to CreateGroupView but pre-populated with existing group data.
 //
 
 import SwiftUI
 import SwiftData
 import UIKit
 
-struct CreateGroupView: View {
+struct EditGroupView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: CreateEditGroupViewModel
     
+    let group: GroupEntity
     let currentUserID: UUID
     
-    init(modelContext: ModelContext, currentUserID: UUID) {
+    init(group: GroupEntity, currentUserID: UUID, modelContext: ModelContext) {
+        self.group = group
         self.currentUserID = currentUserID
         _viewModel = StateObject(wrappedValue: CreateEditGroupViewModel(
             modelContext: modelContext,
-            currentUserID: currentUserID
+            currentUserID: currentUserID,
+            existingGroup: group
         ))
     }
-    
     
     var body: some View {
         NavigationStack {
@@ -47,7 +49,7 @@ struct CreateGroupView: View {
                     .padding()
                 }
             }
-            .navigationTitle("New Group")
+            .navigationTitle("Edit Group")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -63,7 +65,7 @@ struct CreateGroupView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
+                    Button("Save") {
                         viewModel.saveGroup {
                             dismiss()
                         }
@@ -84,7 +86,7 @@ struct CreateGroupView: View {
             .sheet(isPresented: $viewModel.showProfilePictureSheet) {
                 ProfilePictureActionSheet(
                     groupPhotoData: $viewModel.groupPhotoData,
-                    isEditMode: false
+                    isEditMode: true
                 )
                 .presentationDetents([.fraction(0.33)])
                 .presentationDragIndicator(.visible)
@@ -95,6 +97,8 @@ struct CreateGroupView: View {
                 Text(viewModel.errorMessage ?? "An error occurred")
             }
             .onAppear {
+                // Load group data including relationships (must be on MainActor)
+                viewModel.loadGroupData()
                 // Reload friends to ensure data is fresh and handle any init errors
                 viewModel.reloadFriends()
             }
@@ -118,31 +122,33 @@ struct CreateGroupView: View {
                         } else {
                             ZStack {
                                 // Background
-                                Color(.systemBackground)
+                                Color(.systemGray6)
                                 
                                 // Placeholder icon
-                                Image(systemName: "photo")
+                                Image(systemName: "person.3.fill")
                                     .resizable()
                                     .scaledToFit()
                                     .foregroundColor(.secondary)
                                     .frame(width: 40, height: 40)
-
+                                
+                                // Dark overlay
+                                Color.black.opacity(0.3)
                             }
                         }
                     }
                     .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     
                     // Camera icon circle (only show when no photo)
                     if viewModel.groupPhotoData == nil {
                         ZStack {
                             Circle()
-                                .fill(Color.gray.opacity(0.7))
+                                .fill(Color.white)
                                 .frame(width: 24, height: 24)
                             
-                            Image(systemName: "pencil")
+                            Image(systemName: "camera.fill")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white)
+                                .foregroundColor(.black)
                         }
                         .offset(x: 4, y: 4)
                     }
@@ -150,12 +156,23 @@ struct CreateGroupView: View {
             }
             
             // Group Name TextField
-            TextField("Group Name", text: $viewModel.groupName)
-                .font(.body)
-                .textFieldStyle(.plain)
-                .padding()
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            HStack {
+                TextField("Group Name", text: $viewModel.groupName)
+                    .font(.body)
+                    .textFieldStyle(.plain)
+                
+                if !viewModel.groupName.isEmpty {
+                    Button {
+                        viewModel.groupName = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
     
@@ -171,7 +188,7 @@ struct CreateGroupView: View {
                     viewModel.showMemberSelection = true
                 } label: {
                     HStack {
-                        Text("Select People")
+                        Text(viewModel.membersText)
                             .font(.body)
                             .foregroundColor(.secondary)
                         
@@ -294,8 +311,7 @@ struct CreateGroupView: View {
     }
 }
 
-// MARK: - Previews
-#Preview("Create Group View") {
+#Preview {
     // Use the same schema as the main app to ensure consistency
     let schema = Schema([
         UserEntity.self,
@@ -310,7 +326,6 @@ struct CreateGroupView: View {
     ])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     
-    // Create container with proper error handling
     do {
         let container = try ModelContainer(for: schema, configurations: [config])
         let context = container.mainContext
@@ -337,13 +352,58 @@ struct CreateGroupView: View {
         friend5.id = UUID(uuidString: "00000000-0000-0000-0000-000000000006") ?? UUID()
         context.insert(friend5)
         
+        // Create additional friends for "many members" state
+        let friend6 = FriendEntity(userId: "user6", fullName: "John Dioe")
+        friend6.id = UUID(uuidString: "00000000-0000-0000-0000-000000000007") ?? UUID()
+        context.insert(friend6)
+        
+        let friend7 = FriendEntity(userId: "user7", fullName: "Andi Sandika")
+        friend7.id = UUID(uuidString: "00000000-0000-0000-0000-000000000008") ?? UUID()
+        context.insert(friend7)
+        
+        let friend8 = FriendEntity(userId: "user8", fullName: "Sari Yulia")
+        friend8.id = UUID(uuidString: "00000000-0000-0000-0000-000000000009") ?? UUID()
+        context.insert(friend8)
+        
+        // Create group with multiple members and payment due date
+        let group = GroupEntity(name: "Talangin")
+        group.id = UUID(uuidString: "00000000-0000-0000-0000-000000000010") ?? UUID()
+        group.paymentDueDate = Calendar.current.date(byAdding: .day, value: 7, to: Date())
+        // Add many members to show "many members" state
+        group.members = [friend1, friend2, friend3, friend4, friend5, friend6, friend7, friend8]
+        group.createdAt = Calendar.current.date(byAdding: .day, value: -30, to: Date())
+        group.updatedAt = Date()
+        context.insert(group)
+        
+        // Create some expenses for the group
+        let expense1 = ExpenseEntity(
+            title: "Dinner at Restaurant",
+            totalAmount: 250000,
+            createdAt: Calendar.current.date(byAdding: .day, value: -5, to: Date()) ?? Date(),
+            splitMethodRaw: "equal",
+            group: group
+        )
+        expense1.id = UUID()
+        context.insert(expense1)
+        
+        let expense2 = ExpenseEntity(
+            title: "Movie Tickets",
+            totalAmount: 120000,
+            createdAt: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(),
+            splitMethodRaw: "equal",
+            group: group
+        )
+        expense2.id = UUID()
+        context.insert(expense2)
+        
         // Save context
         try context.save()
         
         return NavigationStack {
-            CreateGroupView(
-                modelContext: context,
-                currentUserID: currentUserID
+            EditGroupView(
+                group: group,
+                currentUserID: currentUserID,
+                modelContext: context
             )
         }
         .modelContainer(container)
@@ -358,9 +418,3 @@ struct CreateGroupView: View {
         }
     }
 }
-//
-//#Preview("Date Picker Sheet") {
-//    DatePickerSheet(selectedDate: .constant(Date()))
-//        .presentationDetents([.medium])
-//        .presentationDragIndicator(.visible)
-//}

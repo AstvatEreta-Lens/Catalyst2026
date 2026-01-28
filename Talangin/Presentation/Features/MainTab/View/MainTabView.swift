@@ -55,8 +55,11 @@ struct MainTabView: View {
                 .onDisappear { viewModel.clearRoute() }
 
         case .createGroup:
-            CreateGroupView()
-                .onDisappear { viewModel.clearRoute() }
+            CreateGroupView(
+                modelContext: modelContext,
+                currentUserID: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
+            )
+            .onDisappear { viewModel.clearRoute() }
 
         case .joinWithLink:
             JoinWithLinkView()

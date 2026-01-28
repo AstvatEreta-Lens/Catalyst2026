@@ -19,7 +19,9 @@ struct EditProfileView: View {
     let currentEmail: String
     let currentPhone: String?
     let currentPhotoData: Data?
+    let currentPhotoData: Data?
     let onSave: (String, String, String?, Data?) -> Void
+    let onPhotoChanged: ((Data) -> Void)?
     
     // MARK: - Local State
     @State private var name: String = ""
