@@ -12,16 +12,20 @@ struct AddNewExpenseView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: AddNewExpenseViewModel
     
-    init(group: GroupEntity? = nil) {
-        _viewModel = StateObject(wrappedValue: AddNewExpenseViewModel(group: group))
+    @State private var showImagePicker = false
+    @State private var sourceType: UIImagePickerController.SourceType = .camera
+    @State private var inputImage: UIImage?
+    
+    init(group: GroupEntity? = nil, expenseToEdit: ExpenseEntity? = nil) {
+        _viewModel = StateObject(wrappedValue: AddNewExpenseViewModel(group: group, expenseToEdit: expenseToEdit))
     }
     
     var body: some View {
         NavigationStack {
-                ScrollView{
-                    ZStack(alignment: .top) {
+            ScrollView{
+                ZStack(alignment: .top) {
                     headerSection
-                  
+                    
                     VStack(spacing: 24) {
                         mainCard
                         splitWithSection
@@ -71,52 +75,52 @@ struct AddNewExpenseView: View {
     
     private var headerSection: some View {
         Color(red: 60/255, green: 121/255, blue: 195/255)
-        .frame(height: 282)
-        .overlay(
-            VStack(spacing: 20) {
-                // Custom Navigation Bar
-            
-                HStack {
-                    Button("Cancel") {
-                       dismiss()
-                    }
-                    .font(.body)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+            .frame(height: 282)
+            .overlay(
+                VStack(spacing: 20) {
+                    // Custom Navigation Bar
                     
-                    Spacer()
-                    
-                    Button("Create") {
-                        viewModel.saveExpense {
+                    HStack {
+                        Button("Cancel") {
                             dismiss()
                         }
-                    }
-                    .font(.body)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .disabled(!viewModel.isFormValid)
-                    .opacity(viewModel.isFormValid ? 1.0 : 0.6)
-                }
-                .padding(.horizontal)
-                .padding(.top, 50)
-                
-                // Title Field
-                VStack(alignment: .leading, spacing: 8) {
-                    TextField("", text: $viewModel.title, prompt: Text("Expense Name").foregroundColor(.white.opacity(0.7)))
-                        .font(.system(size: FontTokens.Title1.size, weight: FontTokens.medium))
+                        .font(.body)
+                        .fontWeight(.semibold)
                         .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Button(viewModel.isEditing ? "Save" : "Create") {
+                            viewModel.saveExpense {
+                                dismiss()
+                            }
+                        }
+                        .font(.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .disabled(!viewModel.isFormValid)
+                        .opacity(viewModel.isFormValid ? 1.0 : 0.6)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 50)
                     
-                    Rectangle()
-                        .frame(height: 1)
-                        .foregroundColor(.white.opacity(0.5))
+                    // Title Field
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("", text: $viewModel.title, prompt: Text("Expense Name").foregroundColor(.white.opacity(0.7)))
+                            .font(.system(size: FontTokens.Title1.size, weight: FontTokens.medium))
+                            .foregroundColor(.white)
+                        
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    
+                    Spacer()
                 }
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
-                Spacer()
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 0))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 0))
     }
     
     private var mainCard: some View {
@@ -133,19 +137,60 @@ struct AddNewExpenseView: View {
                         .foregroundColor(.black)
                     TextField("0", text: $viewModel.totalPrice)
                         .font(.system(size: 24, weight: FontTokens.bold))
-                        .keyboardType(.decimalPad)
-                    
+                        .keyboardType(.numberPad)
                     
                     Spacer()
-                    Button {
-                        // Scan logic
-                    } label: {
-                        Image(systemName: "document.viewfinder")
-                            .renderingMode(.template)
-                            .font(.system(size: 24))
-                            .foregroundColor(.blue)
+                    if viewModel.expenseToEdit == nil {
+                        Menu {
+                            Button {
+                                self.sourceType = .camera
+                                self.showImagePicker = true
+                            } label: {
+                                Label("Take a Photo", systemImage: "camera")
+                            }
+                            
+                            Button {
+                                inputImage = nil
+                                self.sourceType = .photoLibrary
+                                self.showImagePicker = true
+                            } label: {
+                                Label("Choose from Gallery", systemImage: "photo.on.rectangle")
+                            }
+                        } label: {
+                            Image(systemName: "document.viewfinder")
+                                .renderingMode(.template)
+                                .font(.system(size: 24))
+                                .foregroundColor(.blue)
+                        }
                     }
-                    
+                }
+                .sheet(isPresented: $showImagePicker) {
+                    CameraView(image: $inputImage, sourceType: sourceType).id(sourceType)
+                }
+                .onChange(of: inputImage) {_, newImage in
+                    if let image = newImage {
+                        viewModel.scanOCR(image: image)
+                    }
+                }
+                .onReceive(viewModel.$items) { detectedItems in
+                    if !detectedItems.isEmpty && !viewModel.isEditing{
+                        DispatchQueue.main.async {
+                            viewModel.applyScannedItems(detectedItems)
+                        }
+                        
+                        inputImage = nil
+                    }
+                }
+                .alert(
+                    "Scan Gagal",
+                    isPresented: Binding(
+                        get: { viewModel.error != nil },
+                        set: { _ in viewModel.error = nil }
+                    )
+                ) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(viewModel.error?.localizedDescription ?? "")
                 }
             }
             .padding(20)
@@ -210,17 +255,17 @@ struct AddNewExpenseView: View {
                         Text("Select People")
                             .foregroundColor(.secondary)
                     } else {
-                        HStack(spacing: -8) {
-                            ForEach(viewModel.selectedBeneficiaryAvatars.prefix(5), id: \.initials) { beneficiary in
-                                InitialsAvatar(initials: beneficiary.initials, size: 32)
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            }
-                            if viewModel.selectedBeneficiaryAvatars.count > 5 {
-                                Text("+\(viewModel.selectedBeneficiaryAvatars.count - 5)")
-                                    .font(.caption2)
-                                    .padding(4)
-                                    .background(Color.gray.opacity(0.2))
-                                    .clipShape(Circle())
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(viewModel.allBeneficiaries, id: \.id) { beneficiary in
+                                    VStack(spacing: 8) {
+                                        InitialsAvatar(initials: beneficiary.avatarInitials, size: 50)
+                                        Text(beneficiary.fullName?.components(separatedBy: " ").first ?? "Unknown")
+                                            .font(.footnote)
+                                            .foregroundColor(.primary)
+                                            .lineLimit(1)
+                                    }
+                                }
                             }
                         }
                     }
@@ -232,7 +277,6 @@ struct AddNewExpenseView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
-                .frame(height: 60)
                 .background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
@@ -249,28 +293,7 @@ struct AddNewExpenseView: View {
             VStack(spacing: 0) {
                 Button(action: { viewModel.showSplitSchemeSheet = true }) {
                     HStack {
-                        if viewModel.splitResult.method == .equally {
-                            HStack(spacing: 8) {
-                                Image(systemName: "person.2.fill")
-                                    .font(.system(size: 14))
-                                    .padding(8)
-                                    .background(Color(red: 0.56, green: 0.79, blue: 0.19).opacity(0.2))
-                                    .clipShape(Circle())
-                                    .foregroundColor(Color(red: 0.56, green: 0.79, blue: 0.19))
-                                
-                                Text("Equal")
-                                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
-                                    .foregroundColor(.black)
-                            }
-                        } else if viewModel.splitResult.method == .none {
-                            Text("Choose Split Method")
-                                .font(.Callout)
-                                .foregroundColor(.secondary)
-                        } else {
-                            Text(viewModel.splitResult.method.rawValue.capitalized)
-                                .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
-                                .foregroundColor(.black)
-                        }
+                        contentForSplitMethod
                         
                         Spacer()
                         
@@ -280,7 +303,7 @@ struct AddNewExpenseView: View {
                     }
                     .padding()
                     .frame(height: 60)
-                    .background(viewModel.splitResult.method == .equally ? Color(red: 0.92, green: 0.96, blue: 0.87) : Color.white)
+                    .background(viewModel.splitResult.method == .none ? Color.white : Color(red: 0.92, green: 0.96, blue: 0.87))
                 }
                 
                 if viewModel.splitResult != .none {
@@ -386,8 +409,50 @@ struct AddNewExpenseView: View {
         .padding(.horizontal)
         .padding(.vertical, 12)
     }
-
     
+    @ViewBuilder
+    private var contentForSplitMethod: some View {
+        let method = viewModel.splitResult.method
+        
+        if method == .none {
+            Text("Choose Split Method")
+                .font(.Callout)
+                .foregroundColor(.secondary)
+        } else {
+            let iconName: String = {
+                switch method {
+                case .equally:   return "arrow.trianglehead.branch"
+                case .unequally: return "person.2.fill"
+                case .itemized:  return "list.bullet"
+                case .none:      return ""
+                }
+            }()
+            
+            let title: String = {
+                switch method {
+                case .equally:   return "Equal"
+                case .unequally: return "Unequally"
+                case .itemized:  return "Itemized"
+                case .none:      return ""
+                }
+            }()
+            
+            let themeGreen = Color(red: 0.56, green: 0.79, blue: 0.19)
+            
+            HStack {
+                Image(systemName: iconName)
+                    .font(.system(size: 14))
+                    .padding(8)
+                    .background(themeGreen.opacity(0.2))
+                    .clipShape(Circle())
+                    .foregroundColor(themeGreen)
+                
+                Text(title)
+                    .font(.system(size: FontTokens.Callout.size, weight: FontTokens.medium))
+                    .foregroundColor(.black)
+            }
+        }
+    }
 }
 
 #Preview {

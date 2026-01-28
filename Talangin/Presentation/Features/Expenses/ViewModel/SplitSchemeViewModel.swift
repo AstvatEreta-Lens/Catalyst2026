@@ -127,11 +127,12 @@ final class SplitSchemeViewModel: ObservableObject {
 
     // MARK: - Private
     private func hydrate(from result: SplitResult) {
+        print("💧 Hydrating from: \(result)")
         switch result {
         case .unequally(let amounts):
             manualAmounts = amounts.mapValues { String(format: "%.0f", $0) }
-        case .itemized(let items):
-            self.items = items
+        case .itemized(let scannedItems):
+            self.items = scannedItems
         default:
             break
         }
