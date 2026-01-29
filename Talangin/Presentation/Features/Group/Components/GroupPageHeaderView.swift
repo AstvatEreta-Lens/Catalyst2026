@@ -47,17 +47,17 @@ struct GroupPageHeaderView: View {
                     }
                     
                     // Edit Icon Overlay
-                    PhotosPicker(selection: $selectedItem, matching: .images) {
-                        ZStack {
-                            Circle()
-                                .fill(.black.opacity(0.5))
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .offset(x: 35, y: 35)
+//                    PhotosPicker(selection: $selectedItem, matching: .images) {
+//                        ZStack {
+//                            Circle()
+//                                .fill(.black.opacity(0.5))
+//                                .frame(width: 32, height: 32)
+//                            Image(systemName: "camera.fill")
+//                                .font(.system(size: 14))
+//                                .foregroundColor(.white)
+//                        }
+//                    }
+//                    .offset(x: 35, y: 35)
                 }
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                 .offset(x: 24, y: 30)
@@ -83,14 +83,14 @@ struct GroupPageHeaderView: View {
                                 .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.primary)
                             
-                            Button {
-                                viewModel.editedName = group.name ?? ""
-                                viewModel.isEditingName = true
-                            } label: {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.secondary)
-                            }
+//                            Button {
+//                                viewModel.editedName = group.name ?? ""
+//                                viewModel.isEditingName = true
+//                            } label: {
+//                                Image(systemName: "pencil")
+//                                    .font(.system(size: 16, weight: .medium))
+//                                    .foregroundColor(.secondary)
+//                            }
                         }
                     
                         

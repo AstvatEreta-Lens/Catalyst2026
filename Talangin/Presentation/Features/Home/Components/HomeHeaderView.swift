@@ -27,11 +27,11 @@ struct HomeHeaderView: View {
                     .foregroundColor(.white)
   
                 Spacer()
-                Button(action: {}) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 20, weight: .bold, design: .default))
-                        .foregroundColor(.white)
-                }
+//                Button(action: {}) {
+//                    Image(systemName: "bell.fill")
+//                        .font(.system(size: 20, weight: .bold, design: .default))
+//                        .foregroundColor(.white)
+//                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 100)

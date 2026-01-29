@@ -63,11 +63,11 @@ struct HomeView: View {
                             
                             Spacer()
                             
-                            Button("See all") {
-                                // Action for See All
-                            }
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
+//                            Button("See all") {
+//                                // Action for See All
+//                            }
+//                            .font(.system(size: 16))
+//                            .foregroundColor(.blue)
                         }
                         .padding(.horizontal, 8)
               

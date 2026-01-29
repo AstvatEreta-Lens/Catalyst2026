@@ -83,7 +83,7 @@ final class SettlementCalculator {
                     }
                 } else {
                     // I'm owed money - check beneficiaries who didn't pay
-                    let totalOwedToOthers = beneficiaries.filter({ b in !payers.contains(where: { $0.id == b.id && $0.amount >= total }) })
+                    _ = beneficiaries.filter({ b in !payers.contains(where: { $0.id == b.id && $0.amount >= total }) })
                     // For simplicity, we use the logic from previous version which works for most cases
                     for beneficiary in beneficiaries where beneficiary.id != memberID {
                         let beneficiaryID = beneficiary.id
