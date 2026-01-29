@@ -50,25 +50,23 @@ struct SignInView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                // MARK: - Background
-                Color(.systemBackground)
-                    .ignoresSafeArea()
-                
+            ZStack(alignment: .bottom) {
                 // MARK: - Gradient Background
                 gradientBackground
+                    .ignoresSafeArea()
                 
-                // MARK: - White Card Content
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Spacer for gradient area
-                        Color.clear
-                            .frame(height: 200)
-                        
-                        // Card Content
-                        cardContent
-                    }
+                // MARK: - Persistent Bottom Card
+                VStack(spacing: 0) {
+                    Spacer()
+                    
+                    cardContent
+                        .background(
+                            Color(.systemBackground)
+                                .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
+                                .shadow(color: .black.opacity(0.1), radius: 10, y: -5)
+                        )
                 }
+                .ignoresSafeArea(edges: .bottom)
             }
             .navigationBarHidden(true)
             .alert(
@@ -97,45 +95,38 @@ struct SignInView: View {
             // MARK: - Header Text
             headerSection
             
+            
             // MARK: - Form Fields
-            formSection
+            //            formSection
             
-            // MARK: - Forgot Password
-            forgotPasswordButton
-            
-            // MARK: - Login Button
-            loginButton
-            
-            // MARK: - Divider
-            orDivider
+            //            // MARK: - Forgot Password
+            //            forgotPasswordButton
+            //
+            //            // MARK: - Login Button
+            //            loginButton
+            //
+            //            // MARK: - Divider
+            //            orDivider
             
             // MARK: - Apple Sign In
             appleSignInButton
-            
-            Spacer(minLength: AppSpacing.xl)
-            
-            // MARK: - Footer
-            footerSection
         }
         .padding(.horizontal, AppSpacing.xl)
-        .padding(.top, AppSpacing.xl)
-        .padding(.bottom, AppSpacing.lg)
-        .background(
-            RoundedCorner(radius: 24, corners: [.topLeft, .topRight])
-                .fill(Color(.systemBackground))
-        )
+        .padding(.top, 32)
+        .padding(.bottom, 40) // Balance for safe area and look
     }
     
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Text("Welcome")
-                .font(.Title1)
+                .font(.appLargeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(.black)
+                .lineSpacing(4)
             
             Text("Join us to track, split, and settle bills with ease")
-                .font(.Subheadline)
+                .font(.subheadline)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

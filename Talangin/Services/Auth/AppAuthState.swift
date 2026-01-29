@@ -24,7 +24,7 @@
 //  - Onboarding status should sync across devices
 //  - If user completed onboarding on device A, device B should skip it
 //  - Use UserEntity.hasCompletedOnboarding as source of truth
-//
+
 
 import Foundation
 import Combine

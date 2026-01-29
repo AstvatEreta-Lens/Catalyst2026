@@ -44,17 +44,17 @@ struct ProfileView: View {
                 
                 
                 
-                // MARK: - Premium Banner (only show for free users)
-                if !viewModel.isPremium {
-                    Section {
-                        PremiumBannerView {
-                            showPaywall = true
-                        }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                    }
-                }
-                
+//                // MARK: - Premium Banner (only show for free users)
+//                if !viewModel.isPremium {
+//                    Section {
+//                        PremiumBannerView {
+//                            showPaywall = true
+//                        }
+//                        .listRowInsets(EdgeInsets())
+//                        .listRowBackground(Color.clear)
+//                    }
+//                }
+//                
                 // MARK: - Payment Account
                 Section {
                     NavigationLink {
