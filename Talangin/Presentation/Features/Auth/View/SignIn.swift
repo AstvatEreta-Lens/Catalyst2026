@@ -110,6 +110,8 @@ struct SignInView: View {
             
             // MARK: - Apple Sign In
             appleSignInButton
+            
+            tryDemoButton
         }
         .padding(.horizontal, AppSpacing.xl)
         .padding(.top, 32)
@@ -222,6 +224,18 @@ struct SignInView: View {
         .frame(height: 50)
         .cornerRadius(12)
     }
+
+    // MARK: - Try Demo Button
+    private var tryDemoButton: some View {
+        Button {
+            authState.isAuthenticated = true
+        } label: {
+            Text("Try Demo")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+    }
+
     
     // MARK: - Footer Section
     private var footerSection: some View {
