@@ -109,7 +109,7 @@ struct SignInView: View {
             //            orDivider
             
             // MARK: - Apple Sign In
-            appleSignInButton
+//            appleSignInButton
             
             tryDemoButton
         }
@@ -231,8 +231,8 @@ struct SignInView: View {
             authState.isAuthenticated = true
         } label: {
             Text("Try Demo")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.headline)
+                .foregroundColor(.primary)
         }
     }
 

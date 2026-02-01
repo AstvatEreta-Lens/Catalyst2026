@@ -43,6 +43,7 @@ struct AuthGateView: View {
                 SplashView {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         authState.dismissSplash()
+                        authState.isAuthenticated = true
                     }
                 }
                 .transition(.opacity)

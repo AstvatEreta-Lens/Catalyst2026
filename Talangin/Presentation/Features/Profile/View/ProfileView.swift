@@ -168,23 +168,23 @@ struct ProfileView: View {
                     Text("ABOUT")
                 }
                 
-                Section {
-                    Button(role: .destructive) {
-                        showLogoutConfirm.toggle()
-                    } label: {
-                        Text("Log Out")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .font(Font.body.bold())
-                    }
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .inset(by: 0.5)
-                            .stroke(Color.red, lineWidth: 1)
-                    )
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+//                Section {
+//                    Button(role: .destructive) {
+//                        showLogoutConfirm.toggle()
+//                    } label: {
+//                        Text("Log Out")
+//                            .frame(maxWidth: .infinity)
+//                            .padding(.vertical, 12)
+//                            .font(Font.body.bold())
+//                    }
+//                    .overlay(
+//                        RoundedRectangle(cornerRadius: 14)
+//                            .inset(by: 0.5)
+//                            .stroke(Color.red, lineWidth: 1)
+//                    )
+//                }
+//                .listRowBackground(Color.clear)
+//                .listRowSeparator(.hidden)
                 
                 // MARK: - Safe Area Spacing
                 // Best practice: Add a transparent section to ensure content
